@@ -1,23 +1,19 @@
-name: AdjustExample
-description: "Adjust Flutter Example App"
+name: paste_button_example
+description: "Demo app for the paste_button plugin"
 publish_to: 'none'
 version: 0.0.1
 
 environment:
   sdk: ">=3.10.0"
+  flutter: ">=3.30.0"
 
 resolution: workspace
 
 dependencies:
   flutter:
     sdk: flutter
-  adjust_ia_sdk_flutter:
+  paste_button:
     path: ../
-
-dependency_overrides:
-  characters: ^1.4.1
-  material_color_utilities: ^0.13.0
-  meta: ^1.17.0
 
 dev_dependencies:
   flutter_test:

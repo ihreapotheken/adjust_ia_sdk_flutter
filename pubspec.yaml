@@ -7,6 +7,13 @@ environment:
   sdk: ">=3.10.0"
   flutter: ">=3.30.0"
 
+workspace:
+  - fallback/paste_button
+  - fallback/deferred_deeplink
+  - example
+  - fallback/paste_button/example
+  - fallback/deferred_deeplink/example
+
 dependencies:
   flutter:
     sdk: flutter

@@ -1,0 +1,28 @@
+name: deferred_deeplink
+description: A Flutter plugin for resolving deferred deep links via device fingerprinting.
+version: 0.0.1
+
+environment:
+  sdk: ">=3.10.0"
+  flutter: ">=3.30.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  webview_flutter: ^4.10.0
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - web/fingerprint.js
+  plugin:
+    platforms:
+      android:
+        package: com.adjust.deferred_deeplink
+        pluginClass: DeferredDeeplinkPlugin
+      ios:
+        pluginClass: DeferredDeeplinkPlugin
