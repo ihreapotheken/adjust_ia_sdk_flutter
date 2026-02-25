@@ -30,10 +30,6 @@ class DeferredDeeplinkDemo extends StatefulWidget {
 }
 
 class _DeferredDeeplinkDemoState extends State<DeferredDeeplinkDemo> {
-  final _endpointController = TextEditingController(
-    text: 'https://example.com/api/v1/deferred-deeplink',
-  );
-
   String _deviceInfoJson = '';
   String _webFingerprintJson = '';
   String _resolvedDeeplink = '';
@@ -62,20 +58,12 @@ class _DeferredDeeplinkDemoState extends State<DeferredDeeplinkDemo> {
 
     await _collectDeviceInfo();
 
-    final result = await DeferredDeeplink.resolve(
-      _endpointController.text,
-    );
+    final result = await DeferredDeeplink.resolve();
 
     setState(() {
       _isLoading = false;
       _resolvedDeeplink = result ?? 'No deeplink returned (null)';
     });
-  }
-
-  @override
-  void dispose() {
-    _endpointController.dispose();
-    super.dispose();
   }
 
   @override
@@ -89,14 +77,6 @@ class _DeferredDeeplinkDemoState extends State<DeferredDeeplinkDemo> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextField(
-                  controller: _endpointController,
-                  decoration: const InputDecoration(
-                    labelText: 'Endpoint URL',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(

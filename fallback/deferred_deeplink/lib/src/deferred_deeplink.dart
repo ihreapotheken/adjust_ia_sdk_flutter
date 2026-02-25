@@ -4,13 +4,11 @@ import 'dart:io';
 import 'package:deferred_deeplink/src/device_info_collector.dart';
 
 /// Resolves a deferred deep link by sending device fingerprint data
-/// to a backend endpoint.
+/// to the backend endpoint.
 ///
 /// Usage:
 /// ```dart
-/// final deeplink = await DeferredDeeplink.resolve(
-///   'https://example.com/api/v1/deferred-deeplink',
-/// );
+/// final deeplink = await DeferredDeeplink.resolve();
 /// if (deeplink != null) {
 ///   // Navigate to the deep link destination.
 /// }
@@ -18,28 +16,34 @@ import 'package:deferred_deeplink/src/device_info_collector.dart';
 class DeferredDeeplink {
   DeferredDeeplink._();
 
-  /// Default request timeout.
-  static const Duration _defaultTimeout = Duration(seconds: 10);
+  static const String _endpoint =
+      'https://example.com/api/v1/deferred-deeplink';
 
-  /// Collects device fingerprint data and sends it to [endpoint]
-  /// via HTTP POST.
+  static const String _ipLookupUrl = 'https://ifconfig.me/all.json';
+
+  /// Collects device fingerprint data, resolves the device's public IP
+  /// address, and sends both to the backend via HTTP POST.
   ///
   /// Returns the deferred deep link URL string from the backend,
   /// or `null` if the resolution fails or no deep link is found.
-  ///
-  /// The optional [timeout] parameter controls how long to wait for
-  /// the backend response (defaults to 10 seconds).
-  static Future<String?> resolve(
-    String endpoint, {
-    Duration timeout = _defaultTimeout,
-  }) async {
+  static Future<String?> resolve() async {
     try {
-      final deviceInfo = await DeviceInfoCollector.collect();
+      final results = await Future.wait([
+        DeviceInfoCollector.collect(),
+        _fetchIpAddress(),
+      ]);
+
+      final deviceInfo = results[0] as Map<String, dynamic>;
+      final ipAddress = results[1] as String?;
+
+      if (ipAddress != null) {
+        deviceInfo['ipAddress'] = ipAddress;
+      }
+
       final jsonBody = jsonEncode(deviceInfo);
 
-      final uri = Uri.parse(endpoint);
+      final uri = Uri.parse(_endpoint);
       final client = HttpClient();
-      client.connectionTimeout = timeout;
 
       try {
         final request = await client.postUrl(uri);
@@ -47,7 +51,7 @@ class DeferredDeeplink {
         request.headers.set(HttpHeaders.acceptHeader, 'application/json');
         request.write(jsonBody);
 
-        final response = await request.close().timeout(timeout);
+        final response = await request.close();
         final responseBody = await response.transform(utf8.decoder).join();
 
         if (response.statusCode == 200) {
@@ -62,5 +66,25 @@ class DeferredDeeplink {
     } catch (_) {
       return null;
     }
+  }
+
+  static Future<String?> _fetchIpAddress() async {
+    try {
+      final client = HttpClient();
+      try {
+        final request = await client.getUrl(Uri.parse(_ipLookupUrl));
+        request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+        final response = await request.close();
+        final body = await response.transform(utf8.decoder).join();
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> json = jsonDecode(body);
+          return json['ip_addr'] as String?;
+        }
+      } finally {
+        client.close();
+      }
+    } catch (_) {}
+    return null;
   }
 }
