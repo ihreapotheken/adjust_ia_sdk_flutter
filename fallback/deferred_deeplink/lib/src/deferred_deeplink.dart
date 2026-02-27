@@ -72,14 +72,15 @@ class DeferredDeeplink {
       try {
         json = jsonDecode(body) as Map<String, dynamic>;
       } catch (e) {
-        throw Exception(e.toString());
+        throw Exception('[IP: $ipAddress] ${e.toString()}');
       }
 
       if (response.statusCode == 200 && json.containsKey('pharmacyId')) {
         return json['pharmacyId'] as int;
       }
 
-      throw Exception(json['message'] as String? ?? body);
+      final message = json['message'] as String? ?? body;
+      throw Exception('[IP: $ipAddress] $message');
     } finally {
       client.close();
     }
