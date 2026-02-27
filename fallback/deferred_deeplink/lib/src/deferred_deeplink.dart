@@ -1,70 +1,87 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:deferred_deeplink/src/device_info_collector.dart';
+/// The backend environment to use for deeplink resolution.
+enum DeferredDeeplinkEnvironment {
+  /// Development environment (`dev.ihreapotheken.de`).
+  dev('dev.ihreapotheken.de'),
 
-/// Resolves a deferred deep link by sending device fingerprint data
-/// to the backend endpoint.
+  /// QA environment (`qa.ihreapotheken.de`).
+  qa('qa.ihreapotheken.de'),
+
+  /// Production environment (`ihreapotheken.de`).
+  prod('ihreapotheken.de');
+
+  const DeferredDeeplinkEnvironment(this.host);
+
+  /// The hostname for this environment.
+  final String host;
+}
+
+/// Resolves a pharmacy pre-selection identifier for deferred deep linking.
 ///
 /// Usage:
 /// ```dart
-/// final deeplink = await DeferredDeeplink.resolve();
-/// if (deeplink != null) {
-///   // Navigate to the deep link destination.
+/// try {
+///   final pharmacyId = await DeferredDeeplink.resolve(
+///     apiKey: 'your-api-key',
+///     environment: DeferredDeeplinkEnvironment.prod,
+///   );
+///   // Navigate to the pharmacy.
+/// } on Exception catch (e) {
+///   // Handle error: e.toString() contains the message.
 /// }
 /// ```
 class DeferredDeeplink {
   DeferredDeeplink._();
 
-  static const String _endpoint =
-      'https://example.com/api/v1/deferred-deeplink';
-
+  static const String _path = '/partners/api/pharmacy-preselection-identifier';
   static const String _ipLookupUrl = 'https://ifconfig.me/all.json';
 
-  /// Collects device fingerprint data, resolves the device's public IP
-  /// address, and sends both to the backend via HTTP POST.
+  /// Resolves the device's public IP address and sends it to the
+  /// pharmacy pre-selection endpoint.
   ///
-  /// Returns the deferred deep link URL string from the backend,
-  /// or `null` if the resolution fails or no deep link is found.
-  static Future<String?> resolve() async {
+  /// Returns the matched `pharmacyId` on success.
+  /// Throws an [Exception] on failure — the message is taken from the
+  /// backend's `message` field if present, otherwise from the caught error.
+  ///
+  /// [apiKey] is required for authenticating with the backend.
+  /// [environment] selects the backend environment
+  /// (defaults to [DeferredDeeplinkEnvironment.prod]).
+  static Future<int> resolve({
+    required String apiKey,
+    DeferredDeeplinkEnvironment environment = DeferredDeeplinkEnvironment.prod,
+  }) async {
+    final ipAddress = await _fetchIpAddress();
+    if (ipAddress == null) {
+      throw Exception('Could not determine public IP address.');
+    }
+
+    final uri = Uri.https(environment.host, _path);
+    final client = HttpClient();
+
     try {
-      final results = await Future.wait([
-        DeviceInfoCollector.collect(),
-        _fetchIpAddress(),
-      ]);
+      final request = await client.getUrl(uri);
+      request.headers.set('apiKey', apiKey);
+      request.headers.set('pharmacyPreselectionIdentifier', ipAddress);
 
-      final deviceInfo = results[0] as Map<String, dynamic>;
-      final ipAddress = results[1] as String?;
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
 
-      if (ipAddress != null) {
-        deviceInfo['ipAddress'] = ipAddress;
-      }
-
-      final jsonBody = jsonEncode(deviceInfo);
-
-      final uri = Uri.parse(_endpoint);
-      final client = HttpClient();
-
+      final Map<String, dynamic> json;
       try {
-        final request = await client.postUrl(uri);
-        request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
-        request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-        request.write(jsonBody);
-
-        final response = await request.close();
-        final responseBody = await response.transform(utf8.decoder).join();
-
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> json = jsonDecode(responseBody);
-          return json['deeplink'] as String?;
-        }
-
-        return null;
-      } finally {
-        client.close();
+        json = jsonDecode(body) as Map<String, dynamic>;
+      } catch (e) {
+        throw Exception(e.toString());
       }
-    } catch (_) {
-      return null;
+
+      if (response.statusCode == 200 && json.containsKey('pharmacyId')) {
+        return json['pharmacyId'] as int;
+      }
+
+      throw Exception(json['message'] as String? ?? body);
+    } finally {
+      client.close();
     }
   }
 
