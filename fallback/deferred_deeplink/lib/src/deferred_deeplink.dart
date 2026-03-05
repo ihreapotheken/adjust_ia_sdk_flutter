@@ -10,8 +10,7 @@ enum DeferredDeeplinkEnvironment {
   qa('qa.ihreapotheken.de'),
 
   /// Production environment (`ihreapotheken.de`).
-  prod('ihreapotheken.de')
-  ;
+  prod('ihreapotheken.de');
 
   const DeferredDeeplinkEnvironment(this.host);
 
@@ -37,27 +36,95 @@ class DeferredDeeplink {
   DeferredDeeplink._();
 
   static const String _path = '/partners/api/pharmacy-preselection-identifier';
-  static const String _ipLookupUrl = 'https://ifconfig.me/all.json';
+
+  /// IPv6-only IP lookup endpoint.
+  static const String _ipv6LookupUrl = 'https://api6.ipify.org?format=json';
+
+  /// IPv4-only IP lookup endpoint.
+  static const String _ipv4LookupUrl = 'https://api.ipify.org?format=json';
 
   /// Resolves the device's public IP address and sends it to the
   /// pharmacy pre-selection endpoint.
   ///
-  /// Returns the matched `pharmacyId` on success.
-  /// Throws an [Exception] on failure — the message is taken from the
-  /// backend's `message` field if present, otherwise from the caught error.
+  /// Tries IPv6 first. If the backend doesn't find a match, retries
+  /// with IPv4 as a fallback.
   ///
-  /// [apiKey] is required for authenticating with the backend.
-  /// [environment] selects the backend environment
-  /// (defaults to [DeferredDeeplinkEnvironment.prod]).
+  /// Returns the matched `pharmacyId` on success.
+  /// Throws an [Exception] on failure.
   static Future<int> resolve({
     required String apiKey,
     DeferredDeeplinkEnvironment environment = DeferredDeeplinkEnvironment.prod,
   }) async {
-    final ipAddress = await _fetchIpAddress();
-    if (ipAddress == null) {
-      throw Exception('Could not determine public IP address.');
+    String? ipv6;
+    String? ipv4;
+    Object? ipv6Error;
+    Object? ipv4Error;
+
+    // Try IPv6 first.
+    try {
+      ipv6 = await _fetchIp(_ipv6LookupUrl);
+      final result = await _queryBackend(
+        apiKey: apiKey,
+        environment: environment,
+        ipAddress: ipv6,
+      );
+      if (result != null) return result;
+    } catch (e) {
+      ipv6Error = e;
     }
 
+    // Fallback to IPv4.
+    try {
+      ipv4 = await _fetchIp(_ipv4LookupUrl);
+      final result = await _queryBackend(
+        apiKey: apiKey,
+        environment: environment,
+        ipAddress: ipv4,
+      );
+      if (result != null) return result;
+    } catch (e) {
+      ipv4Error = e;
+    }
+
+    throw Exception(
+      'Could not resolve pharmacy. '
+      'IPv6: ${ipv6 ?? 'n/a'}${ipv6Error != null ? ' (error: $ipv6Error)' : ''}, '
+      'IPv4: ${ipv4 ?? 'n/a'}${ipv4Error != null ? ' (error: $ipv4Error)' : ''}',
+    );
+  }
+
+  /// Fetches the device's public IP from [url].
+  /// Throws on network or parse errors.
+  static Future<String> _fetchIp(String url) async {
+    final client = HttpClient();
+    try {
+      final request = await client.getUrl(Uri.parse(url));
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode != 200) {
+        throw Exception('IP lookup failed with status ${response.statusCode}');
+      }
+
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final ip = json['ip'] as String?;
+      if (ip == null || ip.isEmpty) {
+        throw Exception('IP lookup returned empty result');
+      }
+      return ip;
+    } finally {
+      client.close();
+    }
+  }
+
+  /// Sends [ipAddress] to the backend and returns the matched pharmacyId,
+  /// or `null` if the backend found no match.
+  /// Throws on network or parse errors.
+  static Future<int?> _queryBackend({
+    required String apiKey,
+    required DeferredDeeplinkEnvironment environment,
+    required String ipAddress,
+  }) async {
     final uri = Uri.https(environment.host, _path);
     final client = HttpClient();
 
@@ -68,50 +135,15 @@ class DeferredDeeplink {
 
       final response = await request.close();
       final body = await response.transform(utf8.decoder).join();
-
-      final Map<String, dynamic> json;
-      try {
-        json = jsonDecode(body) as Map<String, dynamic>;
-      } catch (e) {
-        throw Exception('[IP: $ipAddress] ${e.toString()}');
-      }
+      final json = jsonDecode(body) as Map<String, dynamic>;
 
       if (response.statusCode == 200 && json.containsKey('pharmacyId')) {
         return json['pharmacyId'] as int;
       }
 
-      final message = json['message'] as String? ?? body;
-      throw Exception('[IP: $ipAddress] $message');
+      return null;
     } finally {
       client.close();
     }
-  }
-
-  static Future<String?> _fetchIpAddress() async {
-    try {
-      final uri = Uri.parse(_ipLookupUrl);
-      final addresses = await InternetAddress.lookup(
-        uri.host,
-        type: InternetAddressType.IPv6,
-      );
-      final client = HttpClient();
-      try {
-        final request = await client.getUrl(
-          addresses.isEmpty ? uri : uri.replace(host: addresses.first.host),
-        );
-        request.headers.set(HttpHeaders.hostHeader, uri.host);
-        request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-        final response = await request.close();
-        final body = await response.transform(utf8.decoder).join();
-
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> json = jsonDecode(body);
-          return json['ip_addr'] as String?;
-        }
-      } finally {
-        client.close();
-      }
-    } catch (_) {}
-    return null;
   }
 }
