@@ -94,11 +94,15 @@ class DeferredDeeplink {
         uri.host,
         type: InternetAddressType.IPv6,
       );
-      if (addresses.isEmpty) return null;
+      if (addresses.isEmpty) {
+        throw Exception(
+          'No IPV6 address found.',
+        );
+      }
       final client = HttpClient();
       try {
         final request = await client.getUrl(
-          uri.replace(host: '[${addresses.first.address}]'),
+          uri.replace(host: addresses.first.host),
         );
         request.headers.set(HttpHeaders.hostHeader, uri.host);
         request.headers.set(HttpHeaders.acceptHeader, 'application/json');
