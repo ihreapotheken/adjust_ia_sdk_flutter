@@ -10,7 +10,8 @@ enum DeferredDeeplinkEnvironment {
   qa('qa.ihreapotheken.de'),
 
   /// Production environment (`ihreapotheken.de`).
-  prod('ihreapotheken.de');
+  prod('ihreapotheken.de')
+  ;
 
   const DeferredDeeplinkEnvironment(this.host);
 
@@ -88,9 +89,18 @@ class DeferredDeeplink {
 
   static Future<String?> _fetchIpAddress() async {
     try {
+      final uri = Uri.parse(_ipLookupUrl);
+      final addresses = await InternetAddress.lookup(
+        uri.host,
+        type: InternetAddressType.IPv6,
+      );
+      if (addresses.isEmpty) return null;
       final client = HttpClient();
       try {
-        final request = await client.getUrl(Uri.parse(_ipLookupUrl));
+        final request = await client.getUrl(
+          uri.replace(host: '[${addresses.first.address}]'),
+        );
+        request.headers.set(HttpHeaders.hostHeader, uri.host);
         request.headers.set(HttpHeaders.acceptHeader, 'application/json');
         final response = await request.close();
         final body = await response.transform(utf8.decoder).join();
