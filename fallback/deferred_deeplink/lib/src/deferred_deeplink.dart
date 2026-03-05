@@ -102,7 +102,7 @@ class DeferredDeeplink {
       final client = HttpClient();
       try {
         final request = await client.getUrl(
-          uri.replace(host: addresses.first.host),
+          addresses.isEmpty ? uri : uri.replace(host: addresses.first.host),
         );
         request.headers.set(HttpHeaders.hostHeader, uri.host);
         request.headers.set(HttpHeaders.acceptHeader, 'application/json');
