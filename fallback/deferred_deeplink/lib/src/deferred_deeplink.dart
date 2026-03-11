@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -18,83 +19,153 @@ enum DeferredDeeplinkEnvironment {
   final String host;
 }
 
+/// An IP lookup service with a name and URL.
+class IpLookupService {
+  const IpLookupService({
+    required this.name,
+    required this.url,
+    this.isIpV6 = false,
+  });
+
+  final String name;
+  final String url;
+  final bool isIpV6;
+}
+
+/// The result of a deferred deeplink resolution.
+class DeferredDeeplinkResult {
+  const DeferredDeeplinkResult({
+    required this.pharmacyId,
+    required this.log,
+  });
+
+  /// The matched pharmacy ID, or `null` if no service returned a match.
+  final int? pharmacyId;
+
+  /// A log string describing what each service returned.
+  final String log;
+
+  @override
+  String toString() => 'DeferredDeeplinkResult(pharmacyId: $pharmacyId, log: $log)';
+}
+
 /// Resolves a pharmacy pre-selection identifier for deferred deep linking.
-///
-/// Usage:
-/// ```dart
-/// try {
-///   final pharmacyId = await DeferredDeeplink.resolve(
-///     apiKey: 'your-api-key',
-///     environment: DeferredDeeplinkEnvironment.prod,
-///   );
-///   // Navigate to the pharmacy.
-/// } on Exception catch (e) {
-///   // Handle error: e.toString() contains the message.
-/// }
-/// ```
 class DeferredDeeplink {
   DeferredDeeplink._();
 
   static const String _path = '/partners/api/pharmacy-preselection-identifier';
 
-  /// IPv6-only IP lookup endpoint.
-  static const String _ipv6LookupUrl = 'https://api6.ipify.org?format=json';
-
-  /// IPv4-only IP lookup endpoint.
-  static const String _ipv4LookupUrl = 'https://api.ipify.org?format=json';
+  static const List<IpLookupService> _defaultServices = [
+    IpLookupService(name: 'ipify-v6', url: 'https://api6.ipify.org', isIpV6: true),
+    IpLookupService(name: 'ipify-v4', url: 'https://api.ipify.org'),
+    IpLookupService(name: 'ifconfig', url: 'https://ifconfig.me/ip'),
+  ];
 
   /// Resolves the device's public IP address and sends it to the
   /// pharmacy pre-selection endpoint.
   ///
-  /// Tries IPv6 first. If the backend doesn't find a match, retries
-  /// with IPv4 as a fallback.
-  ///
-  /// Returns the matched `pharmacyId` on success.
-  /// Throws an [Exception] on failure.
-  static Future<int> resolve({
+  /// Runs all [services] in parallel. IPv6 services return immediately
+  /// when they find a pharmacy ID. IPv4 services wait for all IPv6
+  /// services to finish before returning.
+  static Future<DeferredDeeplinkResult> resolve({
     required String apiKey,
     DeferredDeeplinkEnvironment environment = DeferredDeeplinkEnvironment.prod,
+    List<IpLookupService> services = _defaultServices,
   }) async {
-    String? ipv6;
-    String? ipv4;
-    Object? ipv6Error;
-    Object? ipv4Error;
+    final completer = Completer<DeferredDeeplinkResult>();
+    final logLines = <String>[];
+    var remaining = services.length;
+    var remainingV6 = services.where((s) => s.isIpV6).length;
+    int? foundPharmacyId;
 
-    // Try IPv6 first.
-    try {
-      ipv6 = await _fetchIp(_ipv6LookupUrl);
-      final result = await _queryBackend(
+    for (final service in services) {
+      _resolveWithService(
         apiKey: apiKey,
         environment: environment,
-        ipAddress: ipv6,
-      );
-      if (result != null) return result;
-    } catch (e) {
-      ipv6Error = e;
+        service: service,
+      ).then((result) {
+        if (completer.isCompleted) return;
+
+        logLines.add(result.logLine);
+        if (result.pharmacyId != null) foundPharmacyId ??= result.pharmacyId;
+        if (service.isIpV6) remainingV6--;
+        remaining--;
+
+        // IPv6 match wins immediately.
+        if (service.isIpV6 && result.pharmacyId != null) {
+          completer.complete(
+            DeferredDeeplinkResult(
+              pharmacyId: result.pharmacyId,
+              log: logLines.join('\n'),
+            ),
+          );
+          return;
+        }
+
+        // All IPv6 done — complete with best IPv4 result if available.
+        if (remainingV6 == 0 && foundPharmacyId != null) {
+          completer.complete(
+            DeferredDeeplinkResult(
+              pharmacyId: foundPharmacyId,
+              log: logLines.join('\n'),
+            ),
+          );
+          return;
+        }
+
+        // All done, no match found anywhere.
+        if (remaining == 0) {
+          completer.complete(
+            DeferredDeeplinkResult(
+              pharmacyId: null,
+              log: logLines.join('\n'),
+            ),
+          );
+        }
+      });
     }
 
-    // Fallback to IPv4.
+    return completer.future;
+  }
+
+  static Future<_ServiceResult> _resolveWithService({
+    required String apiKey,
+    required DeferredDeeplinkEnvironment environment,
+    required IpLookupService service,
+  }) async {
+    String? ip;
     try {
-      ipv4 = await _fetchIp(_ipv4LookupUrl);
-      final result = await _queryBackend(
+      ip = await _fetchIp(service.url);
+    } catch (e) {
+      return _ServiceResult(
+        logLine: '${service.name}: IP lookup failed ($e)',
+      );
+    }
+
+    try {
+      final pharmacyId = await _queryBackend(
         apiKey: apiKey,
         environment: environment,
-        ipAddress: ipv4,
+        ipAddress: ip,
       );
-      if (result != null) return result;
+      if (pharmacyId != null) {
+        return _ServiceResult(
+          pharmacyId: pharmacyId,
+          logLine: '${service.name}: ip=$ip, pharmacyId=$pharmacyId',
+        );
+      }
+      return _ServiceResult(
+        logLine: '${service.name}: ip=$ip, no match',
+      );
     } catch (e) {
-      ipv4Error = e;
+      return _ServiceResult(
+        logLine: '${service.name}: ip=$ip, backend error ($e)',
+      );
     }
-
-    throw Exception(
-      'Could not resolve pharmacy. '
-      'IPv6: ${ipv6 ?? 'n/a'}${ipv6Error != null ? ' (error: $ipv6Error)' : ''}, '
-      'IPv4: ${ipv4 ?? 'n/a'}${ipv4Error != null ? ' (error: $ipv4Error)' : ''}',
-    );
   }
 
   /// Fetches the device's public IP from [url].
-  /// Throws on network or parse errors.
+  /// Expects a plain-text response containing the IP address.
   static Future<String> _fetchIp(String url) async {
     final client = HttpClient();
     try {
@@ -106,9 +177,8 @@ class DeferredDeeplink {
         throw Exception('IP lookup failed with status ${response.statusCode}');
       }
 
-      final json = jsonDecode(body) as Map<String, dynamic>;
-      final ip = json['ip'] as String?;
-      if (ip == null || ip.isEmpty) {
+      final ip = body.trim();
+      if (ip.isEmpty) {
         throw Exception('IP lookup returned empty result');
       }
       return ip;
@@ -119,7 +189,6 @@ class DeferredDeeplink {
 
   /// Sends [ipAddress] to the backend and returns the matched pharmacyId,
   /// or `null` if the backend found no match.
-  /// Throws on network or parse errors.
   static Future<int?> _queryBackend({
     required String apiKey,
     required DeferredDeeplinkEnvironment environment,
@@ -146,4 +215,11 @@ class DeferredDeeplink {
       client.close();
     }
   }
+}
+
+class _ServiceResult {
+  const _ServiceResult({this.pharmacyId, required this.logLine});
+
+  final int? pharmacyId;
+  final String logLine;
 }
