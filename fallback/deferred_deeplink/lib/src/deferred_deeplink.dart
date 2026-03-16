@@ -34,10 +34,7 @@ class IpLookupService {
 
 /// The result of a deferred deeplink resolution.
 class DeferredDeeplinkResult {
-  const DeferredDeeplinkResult({
-    required this.pharmacyId,
-    required this.log,
-  });
+  const DeferredDeeplinkResult({required this.pharmacyId, required this.log});
 
   /// The matched pharmacy ID, or `null` if no service returned a match.
   final int? pharmacyId;
@@ -46,7 +43,8 @@ class DeferredDeeplinkResult {
   final String log;
 
   @override
-  String toString() => 'DeferredDeeplinkResult(pharmacyId: $pharmacyId, log: $log)';
+  String toString() =>
+      'DeferredDeeplinkResult(pharmacyId: $pharmacyId, log: $log)';
 }
 
 /// Resolves a pharmacy pre-selection identifier for deferred deep linking.
@@ -56,7 +54,11 @@ class DeferredDeeplink {
   static const String _path = '/partners/api/pharmacy-preselection-identifier';
 
   static const List<IpLookupService> _defaultServices = [
-    IpLookupService(name: 'ipify-v6', url: 'https://api6.ipify.org', isIpV6: true),
+    IpLookupService(
+      name: 'ipify-v6',
+      url: 'https://api6.ipify.org',
+      isIpV6: true,
+    ),
     IpLookupService(name: 'ipify-v4', url: 'https://api.ipify.org'),
     IpLookupService(name: 'ifconfig', url: 'https://ifconfig.me/ip'),
   ];
@@ -71,6 +73,7 @@ class DeferredDeeplink {
     required String apiKey,
     DeferredDeeplinkEnvironment environment = DeferredDeeplinkEnvironment.prod,
     List<IpLookupService> services = _defaultServices,
+    String? proxy,
   }) async {
     final completer = Completer<DeferredDeeplinkResult>();
     final logLines = <String>[];
@@ -83,6 +86,7 @@ class DeferredDeeplink {
         apiKey: apiKey,
         environment: environment,
         service: service,
+        proxy: proxy,
       ).then((result) {
         if (completer.isCompleted) return;
 
@@ -116,10 +120,7 @@ class DeferredDeeplink {
         // All done, no match found anywhere.
         if (remaining == 0) {
           completer.complete(
-            DeferredDeeplinkResult(
-              pharmacyId: null,
-              log: logLines.join('\n'),
-            ),
+            DeferredDeeplinkResult(pharmacyId: null, log: logLines.join('\n')),
           );
         }
       });
@@ -132,14 +133,13 @@ class DeferredDeeplink {
     required String apiKey,
     required DeferredDeeplinkEnvironment environment,
     required IpLookupService service,
+    String? proxy,
   }) async {
     String? ip;
     try {
-      ip = await _fetchIp(service.url);
+      ip = await _fetchIp(service.url, proxy: proxy);
     } catch (e) {
-      return _ServiceResult(
-        logLine: '${service.name}: IP lookup failed ($e)',
-      );
+      return _ServiceResult(logLine: '${service.name}: IP lookup failed ($e)');
     }
 
     try {
@@ -147,6 +147,7 @@ class DeferredDeeplink {
         apiKey: apiKey,
         environment: environment,
         ipAddress: ip,
+        proxy: proxy,
       );
       if (pharmacyId != null) {
         return _ServiceResult(
@@ -154,9 +155,7 @@ class DeferredDeeplink {
           logLine: '${service.name}: ip=$ip, pharmacyId=$pharmacyId',
         );
       }
-      return _ServiceResult(
-        logLine: '${service.name}: ip=$ip, no match',
-      );
+      return _ServiceResult(logLine: '${service.name}: ip=$ip, no match');
     } catch (e) {
       return _ServiceResult(
         logLine: '${service.name}: ip=$ip, backend error ($e)',
@@ -166,8 +165,9 @@ class DeferredDeeplink {
 
   /// Fetches the device's public IP from [url].
   /// Expects a plain-text response containing the IP address.
-  static Future<String> _fetchIp(String url) async {
+  static Future<String> _fetchIp(String url, {String? proxy}) async {
     final client = HttpClient();
+    if (proxy != null) client.findProxy = (_) => proxy;
     try {
       final request = await client.getUrl(Uri.parse(url));
       final response = await request.close();
@@ -193,9 +193,11 @@ class DeferredDeeplink {
     required String apiKey,
     required DeferredDeeplinkEnvironment environment,
     required String ipAddress,
+    String? proxy,
   }) async {
     final uri = Uri.https(environment.host, _path);
     final client = HttpClient();
+    if (proxy != null) client.findProxy = (_) => proxy;
 
     try {
       final request = await client.getUrl(uri);
