@@ -32,19 +32,61 @@ class IpLookupService {
   final bool isIpV6;
 }
 
+/// The result of a single IP lookup service resolution.
+class DeferredDeeplinkServiceResult {
+  const DeferredDeeplinkServiceResult({
+    required this.serviceName,
+    this.ip,
+    this.pharmacyId,
+    this.error,
+  });
+
+  /// The name of the service that produced this result.
+  final String serviceName;
+
+  /// The IP address returned by the service, or `null` if lookup failed.
+  final String? ip;
+
+  /// The matched pharmacy ID, or `null` if no match was found.
+  final int? pharmacyId;
+
+  /// The error that occurred, or `null` if the service succeeded.
+  final Object? error;
+
+  @override
+  String toString() =>
+      'DeferredDeeplinkServiceResult(serviceName: $serviceName, ip: $ip, pharmacyId: $pharmacyId, error: $error)';
+}
+
 /// The result of a deferred deeplink resolution.
 class DeferredDeeplinkResult {
-  const DeferredDeeplinkResult({required this.pharmacyId, required this.log});
+  const DeferredDeeplinkResult({
+    required this.pharmacyId,
+    required this.results,
+  });
 
   /// The matched pharmacy ID, or `null` if no service returned a match.
   final int? pharmacyId;
 
-  /// A log string describing what each service returned.
-  final String log;
+  /// The individual results from each service that completed.
+  final List<DeferredDeeplinkServiceResult> results;
+
+  /// Whether any service encountered an error or timed out.
+  bool get hasErrors => results.any((r) => r.error != null);
+
+  /// A human-readable log string summarising what each service returned.
+  String get log => results.map((r) {
+        if (r.error != null) {
+          if (r.ip != null) return '${r.serviceName}: ip=${r.ip}, backend error (${r.error})';
+          return '${r.serviceName}: ${r.error}';
+        }
+        if (r.pharmacyId != null) return '${r.serviceName}: ip=${r.ip}, pharmacyId=${r.pharmacyId}';
+        return '${r.serviceName}: ip=${r.ip}, no match';
+      }).join('\n');
 
   @override
   String toString() =>
-      'DeferredDeeplinkResult(pharmacyId: $pharmacyId, log: $log)';
+      'DeferredDeeplinkResult(pharmacyId: $pharmacyId, results: $results)';
 }
 
 /// Resolves a pharmacy pre-selection identifier for deferred deep linking.
@@ -71,12 +113,13 @@ class DeferredDeeplink {
   /// services to finish before returning.
   static Future<DeferredDeeplinkResult> resolve({
     required String apiKey,
+    required Duration timeout,
     DeferredDeeplinkEnvironment environment = DeferredDeeplinkEnvironment.prod,
     List<IpLookupService> services = _defaultServices,
     String? proxy,
   }) async {
     final completer = Completer<DeferredDeeplinkResult>();
-    final logLines = <String>[];
+    final serviceResults = <DeferredDeeplinkServiceResult>[];
     var remaining = services.length;
     var remainingV6 = services.where((s) => s.isIpV6).length;
     int? foundPharmacyId;
@@ -87,10 +130,12 @@ class DeferredDeeplink {
         environment: environment,
         service: service,
         proxy: proxy,
-      ).then((result) {
+      ).timeout(timeout, onTimeout: () {
+        return DeferredDeeplinkServiceResult(serviceName: service.name, error: TimeoutException('timeout', timeout));
+      }).then((result) {
         if (completer.isCompleted) return;
 
-        logLines.add(result.logLine);
+        serviceResults.add(result);
         if (result.pharmacyId != null) foundPharmacyId ??= result.pharmacyId;
         if (service.isIpV6) remainingV6--;
         remaining--;
@@ -100,18 +145,18 @@ class DeferredDeeplink {
           completer.complete(
             DeferredDeeplinkResult(
               pharmacyId: result.pharmacyId,
-              log: logLines.join('\n'),
+              results: List.unmodifiable(serviceResults),
             ),
           );
           return;
         }
 
-        // All IPv6 done — complete with best IPv4 result if available.
+        // All IPv6 done — complete with best result if available.
         if (remainingV6 == 0 && foundPharmacyId != null) {
           completer.complete(
             DeferredDeeplinkResult(
               pharmacyId: foundPharmacyId,
-              log: logLines.join('\n'),
+              results: List.unmodifiable(serviceResults),
             ),
           );
           return;
@@ -120,7 +165,10 @@ class DeferredDeeplink {
         // All done, no match found anywhere.
         if (remaining == 0) {
           completer.complete(
-            DeferredDeeplinkResult(pharmacyId: null, log: logLines.join('\n')),
+            DeferredDeeplinkResult(
+              pharmacyId: null,
+              results: List.unmodifiable(serviceResults),
+            ),
           );
         }
       });
@@ -129,7 +177,7 @@ class DeferredDeeplink {
     return completer.future;
   }
 
-  static Future<_ServiceResult> _resolveWithService({
+  static Future<DeferredDeeplinkServiceResult> _resolveWithService({
     required String apiKey,
     required DeferredDeeplinkEnvironment environment,
     required IpLookupService service,
@@ -139,7 +187,7 @@ class DeferredDeeplink {
     try {
       ip = await _fetchIp(service.url, proxy: proxy);
     } catch (e) {
-      return _ServiceResult(logLine: '${service.name}: IP lookup failed ($e)');
+      return DeferredDeeplinkServiceResult(serviceName: service.name, error: e);
     }
 
     try {
@@ -149,17 +197,9 @@ class DeferredDeeplink {
         ipAddress: ip,
         proxy: proxy,
       );
-      if (pharmacyId != null) {
-        return _ServiceResult(
-          pharmacyId: pharmacyId,
-          logLine: '${service.name}: ip=$ip, pharmacyId=$pharmacyId',
-        );
-      }
-      return _ServiceResult(logLine: '${service.name}: ip=$ip, no match');
+      return DeferredDeeplinkServiceResult(serviceName: service.name, ip: ip, pharmacyId: pharmacyId);
     } catch (e) {
-      return _ServiceResult(
-        logLine: '${service.name}: ip=$ip, backend error ($e)',
-      );
+      return DeferredDeeplinkServiceResult(serviceName: service.name, ip: ip, error: e);
     }
   }
 
@@ -219,9 +259,3 @@ class DeferredDeeplink {
   }
 }
 
-class _ServiceResult {
-  const _ServiceResult({this.pharmacyId, required this.logLine});
-
-  final int? pharmacyId;
-  final String logLine;
-}
