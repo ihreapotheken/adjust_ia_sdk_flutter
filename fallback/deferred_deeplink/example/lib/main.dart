@@ -68,7 +68,7 @@ class _DeferredDeeplinkDemoState extends State<DeferredDeeplinkDemo> {
     await _collectDeviceInfo();
 
     try {
-      final pharmacyId = await DeferredDeeplink.resolve(apiKey: _apiKeyController.text, environment: _environment);
+      final pharmacyId = await DeferredDeeplink.resolve(apiKey: _apiKeyController.text, timeout: const Duration(seconds: 10), environment: _environment);
       setState(() => _resolvedDeeplink = 'Pharmacy ID: $pharmacyId');
     } on Exception catch (e) {
       setState(() => _resolvedDeeplink = e.toString());
