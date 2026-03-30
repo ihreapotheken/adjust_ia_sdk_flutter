@@ -23,17 +23,19 @@ class DeferredDeeplink {
   /// Resolves the device's public IP address and sends it to the
   /// pharmacy pre-selection endpoint that returns pharmacy id.
   /// 
-  /// It runs multiple IP lookup services in parallel, one strictly ipv6 (that fails if ipv6 is unavailable)
-  /// and one that returns ipv4 or ipv6. Browsers implement happy eyeballs logic 
-  /// to prefer ipv6 but fall back to ipv4 if ipv6 is slow or unavailable, 
-  /// and this mimics that approach to get the best results for all users, because
-  /// dart doesn't implement happy eyeballs.
-  ///
-  /// When first IP lookup completes, starts a 3-second
-  /// timer for the second. This is done becase ipv6 paths can often (10% of all requests) be much
-  /// slower, and we want to return results as fast as possible while still
-  /// giving ipv6 a chance to succeed if available.
-  ///
+  /// We need to get same IP address here as frontend gets when installation link is 
+  /// tapped. Browsers implement happy eyeballs logic to prefer ipv6 (250ms ahead time for ipV6),
+  /// dart doesn't have that, it often happens that browser gets ipv6 and dart 
+  /// gets ipv4 (from ifconfig.me) on the same device. That is why we do following:
+  /// - Call ifconfig.me and api6.ipify.org in parallel, so we get ipv6 and ipv4 (assuming ifconfig returns ipv4)
+  /// - When first IP lookup completes (usually ipv4), start a 3-second timer for others.
+  ///   This is done becase ipv6 paths can often fail (10% of all requests), 
+  ///   and we want to return results as fast as possible while still giving ipv6 
+  ///   a chance to succeed if available. We don't want to wait for timeout that 
+  ///   is passed into the function because that is usually 10 seconds which is 
+  ///   too much.
+  /// - If api6.ipify.org or ifconfig.me returns ipv6 and we get pharmacy id, we return immediately.
+  /// 
   /// The [logCompleter] completer is completed after all services have finished
   /// (including timeouts), allowing you to wait for complete results and logging
   /// even if the main future completes early.
@@ -62,8 +64,7 @@ class DeferredDeeplink {
         serviceResults.add(result);
         remaining--;
 
-        // First service finished — start 3-second timer for others. This prevents
-        // long ipv6 timeouts from delaying the main future.
+        // First service finished — start 3-second timer for others
         if (remaining > 0 && !isTimerStarted) {
           isTimerStarted = true;
 
@@ -73,8 +74,8 @@ class DeferredDeeplink {
                 results: List.unmodifiable(serviceResults),
               );
 
-              // Important: calling the completer but not logCompleter here, 
-              // that way the main future returns early but we can still wait 
+              // Important: calling the completer but not logCompleter here,
+              // that way the main future returns early but we can still wait
               // for the logCompleter to get complete results for logging.
               completer.complete(finalResult);
             }
@@ -82,8 +83,9 @@ class DeferredDeeplink {
           return;
         }
 
-        // Complete when all services finish, or when 3-second timer fires
-        if (remaining == 0 && !completer.isCompleted) {
+        // Complete when all services finish, or if first service got IPv6
+        final hasIpv6 = result.ip != null && result.ip!.contains(':') && result.error == null;
+        if ((remaining == 0 || hasIpv6) && !completer.isCompleted) {
           final finalResult = DeferredDeeplinkResult(
             results: List.unmodifiable(serviceResults),
           );
@@ -165,8 +167,8 @@ class DeferredDeeplink {
     String? proxy,
   }) async {
     final client = HttpClient();
-    if (proxy != null) client.findProxy = (_) => proxy;
     try {
+      if (proxy != null) client.findProxy = (_) => proxy;
       final request = await client.getUrl(Uri.parse(url));
       final response = await request.close();
 
@@ -200,11 +202,10 @@ class DeferredDeeplink {
       final request = await client.getUrl(uri);
       request.headers.set('apiKey', apiKey);
       request.headers.set('pharmacyPreselectionIdentifier', ipAddress);
-
       final response = await request.close();
 
       if (response.statusCode != 200) {
-        return null;
+        throw Exception('Backend request failed with status ${response.statusCode}');
       }
 
       final body = await response.transform(utf8.decoder).join();
