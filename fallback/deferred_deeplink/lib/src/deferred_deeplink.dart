@@ -18,10 +18,12 @@ class DeferredDeeplink {
     IpLookupService(
       name: 'v6.ipinfo.io',
       url: 'https://v6.ipinfo.io/ip',
+      isIpV6Only: true,
     ),
     IpLookupService(
       name: '6.ident.me',
       url: 'https://6.ident.me',
+      isIpV6Only: true,
     ),
     IpLookupService(name: 'ifconfig', url: 'https://ifconfig.me/ip'),
   ];
@@ -82,8 +84,14 @@ class DeferredDeeplink {
         serviceResults.add(result);
         remaining--;
 
-        // Finish main completer when all services finish, or if we got a pharmacy from IPv6
-        final shouldFinishMainCompleter = (remaining == 0 || result.hasPharmacyFromIpV6) && !mainCompleter.isCompleted;
+        // Finish main completer if any of this is true: 
+        //   - all services finished
+        //   - got a pharmacy from IPv6
+        //   - successfully queried backend for IPv4 and IPv6 services
+        final hasResultFromIpV6Service = serviceResults.any((r) => r.hasResultFromIpV6Service);
+        final hasResultFromIpV4Service = serviceResults.any((r) => r.hasResultFromIpV4Service);
+        final hasResultsFromIpV4AndIpV6Services = hasResultFromIpV6Service && hasResultFromIpV4Service;
+        final shouldFinishMainCompleter = (remaining == 0 || result.hasPharmacyFromIpV6 || hasResultsFromIpV4AndIpV6Services) && !mainCompleter.isCompleted;
 
         // First service finished — start 3-second timer for others
         if (!shouldFinishMainCompleter && !isTimerStarted) {
@@ -164,6 +172,7 @@ class DeferredDeeplink {
 
       return DeferredDeeplinkServiceResult(
         serviceName: service.name,
+        isIpV6Only: service.isIpV6Only,
         ip: ip,
         pharmacyId: pharmacyId,
         isDuplicate: isDuplicate,
@@ -173,6 +182,7 @@ class DeferredDeeplink {
     } catch (e) {
       return DeferredDeeplinkServiceResult(
         serviceName: service.name,
+        isIpV6Only: service.isIpV6Only,
         ip: ip,
         isDuplicate: isDuplicate,
         error: e,
@@ -266,16 +276,19 @@ class IpLookupService {
   const IpLookupService({
     required this.name,
     required this.url,
+    this.isIpV6Only = false,
   });
 
   final String name;
   final String url;
+  final bool isIpV6Only;
 }
 
 /// The result of a single IP lookup service resolution.
 class DeferredDeeplinkServiceResult {
   const DeferredDeeplinkServiceResult({
     required this.serviceName,
+    required this.isIpV6Only,
     this.ip,
     this.pharmacyId,
     this.isDuplicate = false,
@@ -286,6 +299,9 @@ class DeferredDeeplinkServiceResult {
 
   /// The name of the service that produced this result.
   final String serviceName;
+
+  /// Whether this service is IPv6-only.
+  final bool isIpV6Only;
 
   /// The IP address returned by the service, or `null` if lookup failed.
   final String? ip;
@@ -305,8 +321,11 @@ class DeferredDeeplinkServiceResult {
   /// The duration of the backend query operation.
   final Duration? backendQueryDuration;
 
-  /// Whether we successfully queried an IPv6 address (pharmacy or no pharmacy).
-  bool get hasIpV6Result => ip != null && ip!.isIpv6 && error == null;
+  /// Whether we successfully queried an IPv6-only service (regardless of pharmacy result).
+  bool get hasResultFromIpV6Service => isIpV6Only && ip != null && error == null;
+
+  /// Whether we successfully queried an IPv4 service (regardless of pharmacy result).
+  bool get hasResultFromIpV4Service => !isIpV6Only && ip != null && error == null;
 
   /// Whether this result successfully obtained a pharmacy from an IPv6 address.
   bool get hasPharmacyFromIpV6 => ip != null && ip!.isIpv6 && error == null && pharmacyId != null;
