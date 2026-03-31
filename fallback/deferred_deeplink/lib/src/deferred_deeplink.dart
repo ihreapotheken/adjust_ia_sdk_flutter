@@ -210,7 +210,7 @@ class DeferredDeeplink {
   }
 
   /// Sends [ipAddress] to the backend and returns the matched pharmacyId,
-  /// or `null` if the backend found no match.
+  /// or `null` if the backend found no match. Every other outcome will throw.
   static Future<int?> _queryBackend({
     required String apiKey,
     required DeferredDeeplinkEnvironment environment,
@@ -226,18 +226,17 @@ class DeferredDeeplink {
       request.headers.set('pharmacyPreselectionIdentifier', ipAddress);
       final response = await request.close();
 
+      if (response.statusCode == 404) {
+        return null;  // No match found, valid response
+      }
+
       if (response.statusCode != 200) {
         throw Exception('Backend ${response.statusCode}');
       }
 
       final body = await response.transform(utf8.decoder).join();
       final json = jsonDecode(body) as Map<String, dynamic>;
-
-      if (json.containsKey('pharmacyId')) {
-        return json['pharmacyId'] as int;
-      }
-
-      return null;
+      return json['pharmacyId'] as int;
     } finally {
       client.close();
     }
@@ -306,6 +305,9 @@ class DeferredDeeplinkServiceResult {
   /// The duration of the backend query operation.
   final Duration? backendQueryDuration;
 
+  /// Whether we successfully queried an IPv6 address (pharmacy or no pharmacy).
+  bool get hasIpV6Result => ip != null && ip!.isIpv6 && error == null;
+
   /// Whether this result successfully obtained a pharmacy from an IPv6 address.
   bool get hasPharmacyFromIpV6 => ip != null && ip!.isIpv6 && error == null && pharmacyId != null;
 
@@ -330,7 +332,7 @@ class DeferredDeeplinkResult {
 
     for (final result in results) {
       if (result.hasPharmacyFromIpV6) {
-        return result.pharmacyId;  // IPv6 found, prefer it immediately
+        return result.pharmacyId;  // IPv6 match found, prefer it immediately
       }
       if (pharmacyId == null && result.error == null && result.pharmacyId != null) {
         pharmacyId = result.pharmacyId;
