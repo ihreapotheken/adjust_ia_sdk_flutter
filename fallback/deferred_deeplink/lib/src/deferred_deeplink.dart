@@ -7,35 +7,47 @@ class DeferredDeeplink {
   DeferredDeeplink._();
 
   static const String _path = '/partners/api/pharmacy-preselection-identifier';
-  static const Duration _graceperiodDuration = Duration(seconds: 3);
+  static const Duration _graceperiodDuration = Duration(seconds: 4);
 
+  /// Notes:
+  /// - https://api6.ipify.org was very slow (out of 9000 events, 2000 were longer than 3 seconds).
+  /// - we were using dedicated IPv4 (api4.ipify.org) endpoint but none ever had pharmacy. In most cases it had same ip as ifconfig.me and when ifconfig returns IPv6 then IPv6 had the pharmacy.
+  /// - IPv6 options: https://v6.ipinfo.io/ip, https://ipv6.seeip.org, https://api6.ipify.org (slow)
+  /// - IPv4/IPv6 options: https://ipquery.io/
   static const List<IpLookupService> _defaultServices = [
     IpLookupService(
-      name: 'ipify-v6',
-      url: 'https://api6.ipify.org',
+      name: 'v6.ipinfo.io',
+      url: 'https://v6.ipinfo.io/ip',
     ),
     IpLookupService(
-      name: 'ifconfig', 
-      url: 'https://ifconfig.me/ip'
+      name: '6.ident.me',
+      url: 'https://6.ident.me',
     ),
+    IpLookupService(name: 'ifconfig', url: 'https://ifconfig.me/ip'),
   ];
 
   /// Resolves the device's public IP address and sends it to the
-  /// pharmacy pre-selection endpoint that returns pharmacy id.
-  /// 
-  /// We need to get same IP address here as frontend gets when installation link is 
-  /// tapped. Browsers implement happy eyeballs logic to prefer ipv6 (250ms ahead time for ipV6),
-  /// dart doesn't have that, it often happens that browser gets ipv6 and dart 
-  /// gets ipv4 (from ifconfig.me) on the same device. That is why we do following:
-  /// - Call ifconfig.me and api6.ipify.org in parallel, so we get ipv6 and ipv4 (assuming ifconfig returns ipv4)
-  /// - When first IP lookup completes (usually ipv4), start a 3-second timer for others.
-  ///   This is done becase ipv6 paths can often fail (10% of all requests), 
-  ///   and we want to return results as fast as possible while still giving ipv6 
-  ///   a chance to succeed if available. We don't want to wait for timeout that 
-  ///   is passed into the function because that is usually 10 seconds which is 
-  ///   too much.
-  /// - If api6.ipify.org or ifconfig.me returns ipv6 and we get pharmacy id, we return immediately.
-  /// 
+  /// pharmacy pre-selection endpoint that returns pharmacy id. Prefers IPv6.
+  ///
+  /// IMPORTANT: This function has mainCompleter and logCompleter. The mainCompleter 
+  /// is completed as soon as we have results from all services or if
+  /// we get a pharmacy id from IPv6, while the logCompleter is completed only
+  /// after all services have finished (including timeouts).
+  ///
+  /// We need to get same IP address here as frontend gets when installation link is
+  /// tapped. Browsers implement happy eyeballs logic to prefer IPv6 (250ms ahead time for IPv6),
+  /// dart doesn't have that, it often happens that browser gets IPv6 and dart
+  /// gets IPv4 (from ifconfig.me) on the same device. That is why we do following:
+  /// - Call ifconfig.me and IPv6 endpoints in parallel, so we get IPv6 and IPv4 
+  ///   (assuming ifconfig returns IPv4)
+  /// - When first IP lookup completes (usually IPv4), start a graceperiod timer 
+  ///   (_graceperiodDuration) for others. This is done becase IPv6 paths can 
+  ///   often fail (10% of all requests), and we want to return results as fast 
+  ///   as possible while still giving IPv6 a chance to succeed if available. We 
+  ///   don't want to wait for timeout that is passed into the function because 
+  ///   that is usually 10 seconds which is too much.
+  /// - If some service returns ipv6 and we get pharmacy id, we return immediately.
+  ///
   /// The [logCompleter] completer is completed after all services have finished
   /// (including timeouts), allowing you to wait for complete results and logging
   /// even if the main future completes early.
@@ -46,11 +58,16 @@ class DeferredDeeplink {
     String? proxy,
     Completer<DeferredDeeplinkResult>? logCompleter,
   }) async {
-    final completer = Completer<DeferredDeeplinkResult>();
+    final mainCompleter = Completer<DeferredDeeplinkResult>();
     final serviceResults = <DeferredDeeplinkServiceResult>[];
+    // Track IPs that have been queried to avoid duplicate backend queries
+    final queriedIps = <String>{};
     List<IpLookupService> services = _defaultServices;
     var remaining = services.length;
     var isTimerStarted = false;
+
+    DeferredDeeplinkResult _finalResult() =>
+        DeferredDeeplinkResult(results: List.unmodifiable(List.from(serviceResults)));
 
     // Run all services in parallel
     for (final service in services) {
@@ -60,51 +77,42 @@ class DeferredDeeplink {
         service: service,
         proxy: proxy,
         timeout: timeout,
+        queriedIps: queriedIps,
       ).then((result) {
         serviceResults.add(result);
         remaining--;
 
+        // Finish main completer when all services finish, or if we got a pharmacy from IPv6
+        final shouldFinishMainCompleter = (remaining == 0 || result.hasPharmacyFromIpV6) && !mainCompleter.isCompleted;
+
         // First service finished — start 3-second timer for others
-        if (remaining > 0 && !isTimerStarted) {
+        if (!shouldFinishMainCompleter && !isTimerStarted) {
           isTimerStarted = true;
 
           Future.delayed(_graceperiodDuration, () {
-            if (!completer.isCompleted) {
-              final finalResult = DeferredDeeplinkResult(
-                results: List.unmodifiable(serviceResults),
-              );
-
+            if (!mainCompleter.isCompleted) {
               // Important: calling the completer but not logCompleter here,
               // that way the main future returns early but we can still wait
               // for the logCompleter to get complete results for logging.
-              completer.complete(finalResult);
+              mainCompleter.complete(_finalResult());
             }
           });
-          return;
         }
 
-        // Complete when all services finish, or if first service got IPv6
-        final hasIpv6 = result.ip != null && result.ip!.contains(':') && result.error == null;
-        if ((remaining == 0 || hasIpv6) && !completer.isCompleted) {
-          final finalResult = DeferredDeeplinkResult(
-            results: List.unmodifiable(serviceResults),
-          );
-          completer.complete(finalResult);
+        if (shouldFinishMainCompleter) {
+          mainCompleter.complete(_finalResult());
         }
 
         // Call logCompleter when all services have finished
         if (remaining == 0) {
           if (logCompleter != null && !logCompleter.isCompleted) {
-            final finalResult = DeferredDeeplinkResult(
-              results: List.unmodifiable(serviceResults)
-            );
-            logCompleter.complete(finalResult);
+            logCompleter.complete(_finalResult());
           }
         }
       });
     }
 
-    return completer.future;
+    return mainCompleter.future;
   }
 
   static Future<DeferredDeeplinkServiceResult> _resolveWithService({
@@ -112,40 +120,53 @@ class DeferredDeeplink {
     required DeferredDeeplinkEnvironment environment,
     required IpLookupService service,
     required Duration timeout,
+    required Set<String> queriedIps,
     String? proxy,
   }) async {
     String? ip;
     int? pharmacyId;
     Duration? ipFetchDuration;
     Duration? backendQueryDuration;
+    bool isDuplicate = false;
+    final ipStopwatch = Stopwatch()..start();
+    final backendStopwatch = Stopwatch();
 
     try {
-      // Single timeout covering both IP fetch and backend query. 
+      // Single timeout covering both IP fetch and backend query.
       //
-      // We are using internal future with timeout instead of wrapping the whole 
-      // function in timeout because we want to capture results and errors from 
-      // both operations, and return a complete result object with 
+      // We are using internal future with timeout instead of wrapping the whole
+      // function in timeout because we want to capture results and errors from
+      // both operations, and return a complete result object with
       // timings for logging (even in case of timeout).
       await (() async {
-        final ipStopwatch = Stopwatch()..start();
         final fetchedIp = await _fetchIp(service.url, proxy: proxy);
         ip = fetchedIp;
         ipFetchDuration = ipStopwatch.elapsed;
 
-        final backendStopwatch = Stopwatch()..start();
-        pharmacyId = await _queryBackend(
-          apiKey: apiKey,
-          environment: environment,
-          ipAddress: fetchedIp,
-          proxy: proxy,
-        );
-        backendQueryDuration = backendStopwatch.elapsed;
+        // Check if we already queried backend with this IP, prevent multiple fetches.
+        if (queriedIps.contains(fetchedIp)) {
+          isDuplicate = true;
+          pharmacyId = null;
+        } else {
+          // Mark as being fetched
+          queriedIps.add(fetchedIp);
+
+          backendStopwatch.start();
+          pharmacyId = await _queryBackend(
+            apiKey: apiKey,
+            environment: environment,
+            ipAddress: fetchedIp,
+            proxy: proxy,
+          );
+          backendQueryDuration = backendStopwatch.elapsed;
+        }
       }()).timeout(timeout);
 
       return DeferredDeeplinkServiceResult(
         serviceName: service.name,
         ip: ip,
         pharmacyId: pharmacyId,
+        isDuplicate: isDuplicate,
         ipFetchDuration: ipFetchDuration,
         backendQueryDuration: backendQueryDuration,
       );
@@ -153,9 +174,10 @@ class DeferredDeeplink {
       return DeferredDeeplinkServiceResult(
         serviceName: service.name,
         ip: ip,
+        isDuplicate: isDuplicate,
         error: e,
-        ipFetchDuration: ipFetchDuration,
-        backendQueryDuration: backendQueryDuration,
+        ipFetchDuration: ipFetchDuration ?? ipStopwatch.elapsed,
+        backendQueryDuration: backendQueryDuration ?? backendStopwatch.elapsed,
       );
     }
   }
@@ -205,7 +227,7 @@ class DeferredDeeplink {
       final response = await request.close();
 
       if (response.statusCode != 200) {
-        throw Exception('Backend request failed with status ${response.statusCode}');
+        throw Exception('Backend ${response.statusCode}');
       }
 
       final body = await response.transform(utf8.decoder).join();
@@ -257,6 +279,7 @@ class DeferredDeeplinkServiceResult {
     required this.serviceName,
     this.ip,
     this.pharmacyId,
+    this.isDuplicate = false,
     this.error,
     this.ipFetchDuration,
     this.backendQueryDuration,
@@ -271,6 +294,9 @@ class DeferredDeeplinkServiceResult {
   /// The matched pharmacy ID, or `null` if no match was found.
   final int? pharmacyId;
 
+  /// Whether this IP was already queried or being queried by another service.
+  final bool isDuplicate;
+
   /// The error that occurred, or `null` if the service succeeded.
   final Object? error;
 
@@ -280,9 +306,12 @@ class DeferredDeeplinkServiceResult {
   /// The duration of the backend query operation.
   final Duration? backendQueryDuration;
 
+  /// Whether this result successfully obtained a pharmacy from an IPv6 address.
+  bool get hasPharmacyFromIpV6 => ip != null && ip!.isIpv6 && error == null && pharmacyId != null;
+
   @override
   String toString() =>
-      'DeferredDeeplinkServiceResult(serviceName: $serviceName, ip: $ip, pharmacyId: $pharmacyId, ipFetchDuration: $ipFetchDuration, backendQueryDuration: $backendQueryDuration, error: $error)';
+      'DeferredDeeplinkServiceResult(serviceName: $serviceName, ip: $ip, pharmacyId: $pharmacyId, isDuplicate: $isDuplicate, ipFetchDuration: $ipFetchDuration, backendQueryDuration: $backendQueryDuration, error: $error)';
 }
 
 /// The result of a deferred deeplink resolution.
@@ -297,19 +326,18 @@ class DeferredDeeplinkResult {
   /// The matched pharmacy ID, preferring IPv6 if multiple results differ.
   /// Returns `null` if no service returned a match.
   int? get pharmacyId {
-    int? ipv6PharmacyId;
-    int? firstPharmacyId;
+    int? pharmacyId;
 
     for (final result in results) {
-      if (result.pharmacyId != null) {
-        firstPharmacyId ??= result.pharmacyId;
-        if (result.ip != null && _isIpv6(result.ip!)) {
-          ipv6PharmacyId = result.pharmacyId;
-        }
+      if (result.hasPharmacyFromIpV6) {
+        return result.pharmacyId;  // IPv6 found, prefer it immediately
+      }
+      if (pharmacyId == null && result.error == null && result.pharmacyId != null) {
+        pharmacyId = result.pharmacyId;
       }
     }
 
-    return ipv6PharmacyId ?? firstPharmacyId;
+    return pharmacyId;
   }
 
   /// Whether any service encountered an error or timed out.
@@ -324,15 +352,16 @@ class DeferredDeeplinkResult {
           if (r.ip != null) return '${r.serviceName}: ip=${r.ip} ($ipDuration), backend error ($backendDuration): ${r.error}';
           return '${r.serviceName}: error ($ipDuration): ${r.error}';
         }
+        if (r.isDuplicate) return '${r.serviceName}: ip=${r.ip} ($ipDuration), pharmacyId=duplicate';
         if (r.pharmacyId != null) return '${r.serviceName}: ip=${r.ip} ($ipDuration), pharmacyId=${r.pharmacyId} ($backendDuration)';
         return '${r.serviceName}: ip=${r.ip} ($ipDuration), no match ($backendDuration)';
       })
-      .join('\n');
+      .join(';\n');
 
   @override
   String toString() => 'DeferredDeeplinkResult(pharmacyId: $pharmacyId, results: $results)';
+}
 
-  static bool _isIpv6(String ip) {
-    return ip.contains(':');
-  }
+extension _IsIpV6 on String {
+  bool get isIpv6 => contains(':');
 }
