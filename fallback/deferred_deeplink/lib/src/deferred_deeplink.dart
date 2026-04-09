@@ -322,10 +322,10 @@ class DeferredDeeplinkServiceResult {
   final Duration? backendQueryDuration;
 
   /// Whether we successfully queried an IPv6-only service (regardless of pharmacy result).
-  bool get hasResultFromIpV6Service => isIpV6Only && ip != null && error == null;
+  bool get hasResultFromIpV6Service => isIpV6Only && ip != null && error == null && !isDuplicate;
 
   /// Whether we successfully queried an IPv4 service (regardless of pharmacy result).
-  bool get hasResultFromIpV4Service => !isIpV6Only && ip != null && error == null;
+  bool get hasResultFromIpV4Service => !isIpV6Only && ip != null && error == null && !isDuplicate;
 
   /// Whether this result successfully obtained a pharmacy from an IPv6 address.
   bool get hasPharmacyFromIpV6 => ip != null && ip!.isIpv6 && error == null && pharmacyId != null;
