@@ -13,5 +13,5 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '12.0'
 
   s.dependency 'Flutter'
-  s.dependency 'Adjust', '5.5.2'
+  s.dependency 'Adjust', '5.7.0'
 end

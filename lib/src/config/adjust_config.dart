@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_attribution.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_event_failure.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_event_success.dart';
+import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_remote_trigger.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_session_failure.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_session_success.dart';
+import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_third_party_sharing_result.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/adjust_store_info.dart';
 import 'package:flutter/services.dart';
 
@@ -83,6 +85,27 @@ typedef DeferredDeeplinkCallback = void Function(String? deeplink);
 /// reported by the native SDK.
 typedef SkanUpdatedCallback = void Function(Map<String, String> skanUpdateData);
 
+/// Callback invoked when a direct deeplink opens the app.
+///
+/// Unlike [DeferredDeeplinkCallback], this fires for deeplinks that open the
+/// app directly (cold start or while running), not deeplinks resolved by
+/// Adjust after a deferred attribution. The [deeplink] parameter is the URL
+/// string of the direct deeplink, or `null` if no URL is available.
+typedef DirectDeeplinkCallback = void Function(String? deeplink);
+
+/// Callback invoked when a remote trigger is received from the backend.
+///
+/// The SDK invokes this once per trigger contained in a backend response, in
+/// the order received.
+typedef RemoteTriggerCallback = void Function(AdjustRemoteTrigger remoteTrigger);
+
+/// Callback invoked when the third-party-sharing settings change.
+///
+/// Assign to receive updates whenever the Adjust backend reports a change to
+/// the third-party-sharing settings for this device.
+typedef ThirdPartySharingSettingsChangedCallback = void Function(
+    AdjustThirdPartySharingResult thirdPartySharingResult);
+
 /// Configuration object for the Adjust SDK.
 ///
 /// Create an [AdjustConfig] instance, set the desired properties, and pass it
@@ -102,7 +125,11 @@ class AdjustConfig {
   static const String _eventSuccessCallbackName = 'adj-event-success';
   static const String _eventFailureCallbackName = 'adj-event-failure';
   static const String _deferredDeeplinkCallbackName = 'adj-deferred-deeplink';
+  static const String _directDeeplinkCallbackName = 'adj-direct-deeplink';
+  static const String _remoteTriggerCallbackName = 'adj-remote-trigger';
   static const String _skanUpdatedCallbackName = 'adj-skan-updated';
+  static const String _thirdPartySharingSettingsChangedCallbackName =
+      'adj-third-party-sharing-settings-changed';
 
   final String _appToken;
   final AdjustEnvironment _environment;
@@ -302,11 +329,30 @@ class AdjustConfig {
   /// deeplink manually inside this callback.
   DeferredDeeplinkCallback? deferredDeeplinkCallback;
 
+  /// Called when a direct deeplink opens the app.
+  ///
+  /// Assign a [DirectDeeplinkCallback] to receive the deeplink URL whenever
+  /// the app is opened directly via a deeplink.
+  DirectDeeplinkCallback? directDeeplinkCallback;
+
+  /// Called when a remote trigger is received from the backend.
+  ///
+  /// Assign a [RemoteTriggerCallback] to receive [AdjustRemoteTrigger]
+  /// objects whenever the backend sends one.
+  RemoteTriggerCallback? remoteTriggerCallback;
+
   /// Called when SKAdNetwork conversion values are updated.
   ///
   /// **iOS only.** Assign a [SkanUpdatedCallback] to receive the SKAN
   /// conversion value map whenever the native SDK updates it.
   SkanUpdatedCallback? skanUpdatedCallback;
+
+  /// Called when the third-party-sharing settings change.
+  ///
+  /// Assign a [ThirdPartySharingSettingsChangedCallback] to receive
+  /// [AdjustThirdPartySharingResult] updates whenever the Adjust backend
+  /// reports a change.
+  ThirdPartySharingSettingsChangedCallback? thirdPartySharingSettingsChangedCallback;
 
   /// Creates an [AdjustConfig] for the app identified by [_appToken] running
   /// in [_environment].
@@ -372,9 +418,28 @@ class AdjustConfig {
               }
             }
             break;
+          case _directDeeplinkCallbackName:
+            if (directDeeplinkCallback != null) {
+              String? deeplink = call.arguments['deeplink'];
+              directDeeplinkCallback!(deeplink);
+            }
+            break;
+          case _remoteTriggerCallbackName:
+            if (remoteTriggerCallback != null) {
+              AdjustRemoteTrigger remoteTrigger = AdjustRemoteTrigger.fromMap(call.arguments);
+              remoteTriggerCallback!(remoteTrigger);
+            }
+            break;
           case _skanUpdatedCallbackName:
             if (skanUpdatedCallback != null) {
               skanUpdatedCallback!(Map<String, String>.from(call.arguments));
+            }
+            break;
+          case _thirdPartySharingSettingsChangedCallbackName:
+            if (thirdPartySharingSettingsChangedCallback != null) {
+              AdjustThirdPartySharingResult thirdPartySharingResult =
+                  AdjustThirdPartySharingResult.fromMap(call.arguments);
+              thirdPartySharingSettingsChangedCallback!(thirdPartySharingResult);
             }
             break;
           default:
@@ -499,8 +564,14 @@ class AdjustConfig {
     if (deferredDeeplinkCallback != null) {
       configMap['deferredDeeplinkCallback'] = _deferredDeeplinkCallbackName;
     }
+    if (remoteTriggerCallback != null) {
+      configMap['remoteTriggerCallback'] = _remoteTriggerCallbackName;
+    }
     if (skanUpdatedCallback != null) {
       configMap['skanUpdatedCallback'] = _skanUpdatedCallbackName;
+    }
+    if (thirdPartySharingSettingsChangedCallback != null) {
+      configMap['thirdPartySharingSettingsChangedCallback'] = _thirdPartySharingSettingsChangedCallbackName;
     }
 
     return configMap;

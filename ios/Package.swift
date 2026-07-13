@@ -12,14 +12,14 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/adjust/ios_sdk",
-            .upToNextMajor(from: "5.5.2")
+            .upToNextMajor(from: "5.7.0")
         ),
     ],
     targets: [
         .target(
             name: "adjust_ia_sdk_flutter",
             dependencies: [
-                .product(name: "Adjust", package: "ios_sdk"),
+                .product(name: "AdjustSdk", package: "ios_sdk"),
             ],
             path: "Classes"
         ),

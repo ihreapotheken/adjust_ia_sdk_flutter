@@ -9,6 +9,7 @@ import 'package:adjust_ia_sdk_flutter/src/models/adjust_event.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/adjust_play_store_purchase.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/adjust_play_store_subscription.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_purchase_verification_result.dart';
+import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_third_party_sharing_result.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/adjust_third_party_sharing.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/adjust_deeplink.dart';
 
@@ -411,6 +412,26 @@ class Adjust {
       'getLastDeeplink',
     );
     return deeplink;
+  }
+
+  /// Returns the current third-party-sharing settings, waiting up to
+  /// [timeoutInMilliseconds] milliseconds for them to become available.
+  ///
+  /// Returns `null` if the settings are still not available after the
+  /// timeout elapses.
+  static Future<AdjustThirdPartySharingResult?> getThirdPartySharingSettingsWithTimeout(
+    int timeoutInMilliseconds,
+  ) async {
+    final dynamic thirdPartySharingResultMap = await _channel.invokeMethod(
+      'getThirdPartySharingSettingsWithTimeout',
+      {
+        'timeoutInMilliseconds': timeoutInMilliseconds,
+      },
+    );
+    if (thirdPartySharingResultMap == null) {
+      return null;
+    }
+    return AdjustThirdPartySharingResult.fromMap(thirdPartySharingResultMap);
   }
 
   /// Returns the full SDK version string, including the Flutter SDK prefix.

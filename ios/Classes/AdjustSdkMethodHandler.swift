@@ -11,9 +11,11 @@ import AdjustSdk
 
 class AdjustSdkMethodHandler: NSObject {
     private weak var channel: FlutterMethodChannel?
+    private let onSdkInitialized: () -> Void
 
-    init(channel: FlutterMethodChannel) {
+    init(channel: FlutterMethodChannel, onSdkInitialized: @escaping () -> Void = {}) {
         self.channel = channel
+        self.onSdkInitialized = onSdkInitialized
         super.init()
     }
 
@@ -101,6 +103,8 @@ class AdjustSdkMethodHandler: NSObject {
             }
         case "getAdidWithTimeout":
             getAdidWithTimeout(call, result: result)
+        case "getThirdPartySharingSettingsWithTimeout":
+            getThirdPartySharingSettingsWithTimeout(call, result: result)
         case "verifyAppStorePurchase":
             verifyAppStorePurchase(call, result: result)
         case "verifyAndTrackAppStorePurchase":
@@ -181,6 +185,8 @@ class AdjustSdkMethodHandler: NSObject {
         let dartEventFailureCallback = args["eventFailureCallback"] as? String
         let dartDeferredDeeplinkCallback = args["deferredDeeplinkCallback"] as? String
         let dartSkanUpdatedCallback = args["skanUpdatedCallback"] as? String
+        let dartRemoteTriggerCallback = args["remoteTriggerCallback"] as? String
+        let dartThirdPartySharingSettingsChangedCallback = args["thirdPartySharingSettingsChangedCallback"] as? String
         let isDeferredDeeplinkOpeningEnabled = args["isDeferredDeeplinkOpeningEnabled"] as? String
         let launchDeferredDeeplink = AdjustSdkMappers.isFieldValid(isDeferredDeeplinkOpeningEnabled)
             ? (isDeferredDeeplinkOpeningEnabled! as NSString).boolValue
@@ -342,7 +348,9 @@ class AdjustSdkMethodHandler: NSObject {
             || dartEventSuccessCallback != nil
             || dartEventFailureCallback != nil
             || dartDeferredDeeplinkCallback != nil
-            || dartSkanUpdatedCallback != nil {
+            || dartSkanUpdatedCallback != nil
+            || dartRemoteTriggerCallback != nil
+            || dartThirdPartySharingSettingsChangedCallback != nil {
             if let channel = self.channel {
                 adjustConfig?.delegate = AdjustSdkDelegate.getInstance(
                     attributionCallback: dartAttributionCallback,
@@ -352,6 +360,8 @@ class AdjustSdkMethodHandler: NSObject {
                     eventFailureCallback: dartEventFailureCallback,
                     deferredDeeplinkCallback: dartDeferredDeeplinkCallback,
                     skanUpdatedCallback: dartSkanUpdatedCallback,
+                    remoteTriggerCallback: dartRemoteTriggerCallback,
+                    thirdPartySharingSettingsChangedCallback: dartThirdPartySharingSettingsChangedCallback,
                     shouldLaunchDeferredDeeplink: launchDeferredDeeplink,
                     channel: channel
                 )
@@ -362,6 +372,7 @@ class AdjustSdkMethodHandler: NSObject {
         if let adjustConfig = adjustConfig {
             Adjust.initSdk(adjustConfig)
         }
+        onSdkInitialized()
         result(nil)
     }
 
@@ -844,6 +855,37 @@ class AdjustSdkMethodHandler: NSObject {
         let timeoutMs = timeoutInMilliseconds.intValue
         Adjust.adid(withTimeout: timeoutMs) { adid in
             result(adid)
+        }
+    }
+
+    private func getThirdPartySharingSettingsWithTimeout(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any] else {
+            result(nil)
+            return
+        }
+
+        guard let timeoutInMilliseconds = args["timeoutInMilliseconds"] as? NSNumber else {
+            result(FlutterError(
+                code: "INVALID_ARGUMENT",
+                message: "timeoutInMilliseconds is required",
+                details: nil
+            ))
+            return
+        }
+
+        let timeoutMs = timeoutInMilliseconds.intValue
+        Adjust.thirdPartySharingSettings(withTimeout: timeoutMs) { thirdPartySharingResult in
+            guard let thirdPartySharingResult = thirdPartySharingResult else {
+                result(nil)
+                return
+            }
+            let dictionary = NSMutableDictionary()
+            AdjustSdkMappers.addValueOrEmpty(
+                thirdPartySharingResult.thirdPartySharingSettingsJson,
+                withKey: "thirdPartySharingSettingsJson",
+                to: dictionary
+            )
+            result(dictionary)
         }
     }
 

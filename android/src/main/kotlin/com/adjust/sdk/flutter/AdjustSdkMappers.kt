@@ -11,6 +11,8 @@ import android.util.Log
 import com.adjust.sdk.AdjustAttribution
 import com.adjust.sdk.AdjustEvent
 import com.adjust.sdk.AdjustPurchaseVerificationResult
+import com.adjust.sdk.AdjustRemoteTrigger
+import com.adjust.sdk.AdjustThirdPartySharingResult
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -104,6 +106,19 @@ object AdjustSdkMappers {
         map["code"] = result.code.toString()
         map["verificationStatus"] = result.verificationStatus
         map["message"] = result.message
+        return map
+    }
+
+    fun remoteTriggerToMap(remoteTrigger: AdjustRemoteTrigger): HashMap<String, String> {
+        val map = HashMap<String, String>()
+        map["label"] = remoteTrigger.label ?: ""
+        map["payloadJson"] = remoteTrigger.payload?.toString() ?: "{}"
+        return map
+    }
+
+    fun thirdPartySharingResultToMap(result: AdjustThirdPartySharingResult): HashMap<String, String> {
+        val map = HashMap<String, String>()
+        map["thirdPartySharingSettingsJson"] = result.thirdPartySharingSettingsJson ?: "{}"
         return map
     }
 

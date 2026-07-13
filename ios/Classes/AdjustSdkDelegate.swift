@@ -22,6 +22,8 @@ class AdjustSdkDelegate: NSObject, AdjustDelegate {
     var eventFailureCallbackName: String?
     var deferredDeeplinkCallbackName: String?
     var skanUpdatedCallbackName: String?
+    var remoteTriggerCallbackName: String?
+    var thirdPartySharingSettingsChangedCallbackName: String?
 
     static func getInstance(
         attributionCallback: String?,
@@ -31,6 +33,8 @@ class AdjustSdkDelegate: NSObject, AdjustDelegate {
         eventFailureCallback: String?,
         deferredDeeplinkCallback: String?,
         skanUpdatedCallback: String?,
+        remoteTriggerCallback: String?,
+        thirdPartySharingSettingsChangedCallback: String?,
         shouldLaunchDeferredDeeplink: Bool,
         channel: FlutterMethodChannel
     ) -> AdjustSdkDelegate {
@@ -46,6 +50,8 @@ class AdjustSdkDelegate: NSObject, AdjustDelegate {
         instance.eventFailureCallbackName = eventFailureCallback
         instance.deferredDeeplinkCallbackName = deferredDeeplinkCallback
         instance.skanUpdatedCallbackName = skanUpdatedCallback
+        instance.remoteTriggerCallbackName = remoteTriggerCallback
+        instance.thirdPartySharingSettingsChangedCallbackName = thirdPartySharingSettingsChangedCallback
         instance.shouldLaunchDeferredDeeplink = shouldLaunchDeferredDeeplink
         instance.channel = channel
 
@@ -186,6 +192,33 @@ class AdjustSdkDelegate: NSObject, AdjustDelegate {
         channel?.invokeMethod(callbackName, arguments: data)
     }
 
+    func adjustRemoteTriggerReceived(_ remoteTrigger: ADJRemoteTrigger) {
+        guard let callbackName = remoteTriggerCallbackName else {
+            return
+        }
+
+        let payloadJson = toCompactJson(remoteTrigger.payload) ?? "{}"
+        let remoteTriggerMap: [String: String] = [
+            "label": getValueOrEmpty(remoteTrigger.label),
+            "payloadJson": payloadJson
+        ]
+
+        channel?.invokeMethod(callbackName, arguments: remoteTriggerMap)
+    }
+
+    func adjustThirdPartySharingSettingsChanged(_ thirdPartySharingResult: ADJThirdPartySharingResult?) {
+        guard let thirdPartySharingResult = thirdPartySharingResult,
+              let callbackName = thirdPartySharingSettingsChangedCallbackName else {
+            return
+        }
+
+        let thirdPartySharingResultMap: [String: String] = [
+            "thirdPartySharingSettingsJson": getValueOrEmpty(thirdPartySharingResult.thirdPartySharingSettingsJson)
+        ]
+
+        channel?.invokeMethod(callbackName, arguments: thirdPartySharingResultMap)
+    }
+
     // MARK: - Private helper methods
 
     private func getValueOrEmpty(_ value: String?) -> String {
@@ -214,5 +247,12 @@ class AdjustSdkDelegate: NSObject, AdjustDelegate {
             return String(data: jsonData, encoding: .utf8) ?? ""
         }
         return ""
+    }
+
+    private func toCompactJson(_ object: Any) -> String? {
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: object, options: []) else {
+            return nil
+        }
+        return String(data: jsonData, encoding: .utf8)
     }
 }

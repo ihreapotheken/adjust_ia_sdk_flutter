@@ -21,22 +21,29 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 android {
-    compileSdkVersion 36
+    compileSdk = 36
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
     defaultConfig {
-        minSdkVersion 16
+        minSdk = 16
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-    lintOptions {
+    lint {
         disable 'InvalidPackage'
     }
     namespace 'com.adjust.sdk.flutter'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
 }
 
 dependencies {
-    implementation 'com.adjust.sdk:adjust-android:5.5.0'
+    implementation 'com.adjust.sdk:adjust-android:5.7.0'
 }
