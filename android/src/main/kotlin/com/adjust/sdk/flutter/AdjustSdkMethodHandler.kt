@@ -33,7 +33,8 @@ import io.flutter.plugin.common.MethodChannel.Result
 
 class AdjustSdkMethodHandler(
     private val applicationContext: Context,
-    private val channel: MethodChannel
+    private val channel: MethodChannel,
+    private val onSdkInitialized: () -> Unit = {}
 ) : MethodCallHandler {
 
     companion object {
@@ -74,6 +75,7 @@ class AdjustSdkMethodHandler(
             "getAttributionWithTimeout" -> getAttributionWithTimeout(call, result)
             "getAdid" -> getAdid(result)
             "getAdidWithTimeout" -> getAdidWithTimeout(call, result)
+            "getThirdPartySharingSettingsWithTimeout" -> getThirdPartySharingSettingsWithTimeout(call, result)
             "getLastDeeplink" -> getLastDeeplink(result)
             "getSdkVersion" -> getSdkVersion(result)
             // android only
@@ -370,8 +372,25 @@ class AdjustSdkMethodHandler(
             }
         }
 
+        // remote trigger callback
+        if (configMap.containsKey("remoteTriggerCallback")) {
+            val dartMethodName = configMap["remoteTriggerCallback"] as? String
+            if (dartMethodName != null) {
+                AdjustSdkCallbacks.setupRemoteTriggerCallback(adjustConfig, dartMethodName, channel)
+            }
+        }
+
+        // third party sharing settings changed callback
+        if (configMap.containsKey("thirdPartySharingSettingsChangedCallback")) {
+            val dartMethodName = configMap["thirdPartySharingSettingsChangedCallback"] as? String
+            if (dartMethodName != null) {
+                AdjustSdkCallbacks.setupThirdPartySharingSettingsChangedCallback(adjustConfig, dartMethodName, channel)
+            }
+        }
+
         // initialize SDK
         Adjust.initSdk(adjustConfig)
+        onSdkInitialized()
         result.success(null)
     }
 
@@ -744,6 +763,31 @@ class AdjustSdkMethodHandler(
             }
             val adjustAttributionMap = AdjustSdkMappers.attributionToMap(attribution)
             result.success(adjustAttributionMap)
+        }
+    }
+
+    private fun getThirdPartySharingSettingsWithTimeout(call: MethodCall, result: Result) {
+        @Suppress("UNCHECKED_CAST")
+        val timeoutMap = call.arguments as? Map<*, *>
+        if (timeoutMap == null || !timeoutMap.containsKey("timeoutInMilliseconds")) {
+            result.error("INVALID_ARGUMENT", "timeoutInMilliseconds is required", null)
+            return
+        }
+
+        val timeoutInMilliseconds: Long
+        try {
+            timeoutInMilliseconds = timeoutMap["timeoutInMilliseconds"].toString().toLong()
+        } catch (e: NumberFormatException) {
+            result.error("INVALID_ARGUMENT", "timeoutInMilliseconds must be a valid number", null)
+            return
+        }
+
+        Adjust.getThirdPartySharingSettingsWithTimeout(applicationContext, timeoutInMilliseconds) { thirdPartySharingResult ->
+            if (thirdPartySharingResult == null) {
+                result.success(null)
+                return@getThirdPartySharingSettingsWithTimeout
+            }
+            result.success(AdjustSdkMappers.thirdPartySharingResultToMap(thirdPartySharingResult))
         }
     }
 

@@ -124,4 +124,24 @@ object AdjustSdkCallbacks {
             isDeferredDeeplinkOpeningEnabled
         }
     }
+
+    fun setupRemoteTriggerCallback(
+        config: AdjustConfig,
+        dartMethodName: String,
+        channel: MethodChannel?
+    ) {
+        config.setOnRemoteTriggerListener { remoteTrigger ->
+            channel?.invokeMethod(dartMethodName, AdjustSdkMappers.remoteTriggerToMap(remoteTrigger))
+        }
+    }
+
+    fun setupThirdPartySharingSettingsChangedCallback(
+        config: AdjustConfig,
+        dartMethodName: String,
+        channel: MethodChannel?
+    ) {
+        config.setOnThirdPartySharingSettingsChangedListener { thirdPartySharingResult ->
+            channel?.invokeMethod(dartMethodName, AdjustSdkMappers.thirdPartySharingResultToMap(thirdPartySharingResult))
+        }
+    }
 }
