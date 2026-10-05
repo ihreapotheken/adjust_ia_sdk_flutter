@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // the Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins
+    // the Flutter Gradle Plugin must be applied after the Android Gradle plugin
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -14,10 +13,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     defaultConfig {
@@ -37,10 +32,16 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+    }
+}
+
 flutter {
     source = "../.."
 }
 
 dependencies {
-    implementation("com.adjust.sdk:adjust-android-google-lvl:5.5.0")
+    implementation("com.adjust.sdk:adjust-android-google-lvl:5.8.0")
 }

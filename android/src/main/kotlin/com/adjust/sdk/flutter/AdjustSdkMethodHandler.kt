@@ -204,6 +204,60 @@ class AdjustSdkMethodHandler(
             }
         }
 
+        // Facebook ID reading
+        if (configMap.containsKey("isFbIdReadingEnabled")) {
+            val strIsFbIdReadingEnabled = configMap["isFbIdReadingEnabled"] as? String
+            val isFbIdReadingEnabled = strIsFbIdReadingEnabled.toBoolean()
+            if (!isFbIdReadingEnabled) {
+                adjustConfig.disableFbIdReading()
+            }
+        }
+
+        // Google Advertising ID reading
+        if (configMap.containsKey("isGoogleAdIdReadingEnabled")) {
+            val strIsGoogleAdIdReadingEnabled = configMap["isGoogleAdIdReadingEnabled"] as? String
+            val isGoogleAdIdReadingEnabled = strIsGoogleAdIdReadingEnabled.toBoolean()
+            if (!isGoogleAdIdReadingEnabled) {
+                adjustConfig.disableGoogleAdIdReading()
+            }
+        }
+
+        // Android ID reading
+        if (configMap.containsKey("isAndroidIdReadingEnabled")) {
+            val strIsAndroidIdReadingEnabled = configMap["isAndroidIdReadingEnabled"] as? String
+            val isAndroidIdReadingEnabled = strIsAndroidIdReadingEnabled.toBoolean()
+            if (!isAndroidIdReadingEnabled) {
+                adjustConfig.disableAndroidIdReading()
+            }
+        }
+
+        // Fire Advertising ID reading
+        if (configMap.containsKey("isFireAdIdReadingEnabled")) {
+            val strIsFireAdIdReadingEnabled = configMap["isFireAdIdReadingEnabled"] as? String
+            val isFireAdIdReadingEnabled = strIsFireAdIdReadingEnabled.toBoolean()
+            if (!isFireAdIdReadingEnabled) {
+                adjustConfig.disableFireAdIdReading()
+            }
+        }
+
+        // device IDs from plugins (IMEI, OAID) reading
+        if (configMap.containsKey("isDeviceIdsFromPluginsReadingEnabled")) {
+            val strIsDeviceIdsFromPluginsReadingEnabled = configMap["isDeviceIdsFromPluginsReadingEnabled"] as? String
+            val isDeviceIdsFromPluginsReadingEnabled = strIsDeviceIdsFromPluginsReadingEnabled.toBoolean()
+            if (!isDeviceIdsFromPluginsReadingEnabled) {
+                adjustConfig.disableDeviceIdsFromPluginsReading()
+            }
+        }
+
+        // all device IDs reading
+        if (configMap.containsKey("isDeviceIdsReadingEnabled")) {
+            val strIsDeviceIdsReadingEnabled = configMap["isDeviceIdsReadingEnabled"] as? String
+            val isDeviceIdsReadingEnabled = strIsDeviceIdsReadingEnabled.toBoolean()
+            if (!isDeviceIdsReadingEnabled) {
+                adjustConfig.disableDeviceIdsReading()
+            }
+        }
+
         // event deduplication buffer size
         if (configMap.containsKey("eventDeduplicationIdsMaxSize")) {
             val strEventDeduplicationIdsMaxSize = configMap["eventDeduplicationIdsMaxSize"] as? String
@@ -370,6 +424,9 @@ class AdjustSdkMethodHandler(
                     isDeferredDeeplinkOpeningEnabled
                 )
             }
+        } else if (!isDeferredDeeplinkOpeningEnabled) {
+            // honour disabled opening even without a Dart callback
+            adjustConfig.setOnDeferredDeeplinkResponseListener { false }
         }
 
         // remote trigger callback

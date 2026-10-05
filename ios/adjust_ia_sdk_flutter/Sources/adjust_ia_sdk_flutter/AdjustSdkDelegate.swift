@@ -171,16 +171,14 @@ class AdjustSdkDelegate: NSObject, AdjustDelegate {
     }
 
     func adjustDeferredDeeplinkReceived(_ deeplink: URL?) -> Bool {
-        guard let deeplink = deeplink,
-              let callbackName = deferredDeeplinkCallbackName else {
-            return false
+        // The delegate is installed whenever any callback is set, so honour the
+        // opening setting even when no deferred deeplink callback is registered.
+        if let deeplink = deeplink, let callbackName = deferredDeeplinkCallbackName {
+            let deeplinkMap: [String: String] = [
+                "deeplink": deeplink.absoluteString
+            ]
+            channel?.invokeMethod(callbackName, arguments: deeplinkMap)
         }
-
-        let deeplinkMap: [String: String] = [
-            "deeplink": deeplink.absoluteString
-        ]
-
-        channel?.invokeMethod(callbackName, arguments: deeplinkMap)
         return shouldLaunchDeferredDeeplink
     }
 

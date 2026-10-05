@@ -27,7 +27,7 @@ import 'package:meta/meta.dart';
 /// Adjust.initSdk(config);
 /// ```
 class Adjust {
-  static const _sdkPrefix = 'flutter5.5.0';
+  static const _sdkPrefix = 'flutter5.8.0';
   static const _channel = MethodChannel('com.adjust.sdk/api');
 
   /// Initialises the Adjust SDK with the provided [config].
@@ -437,7 +437,7 @@ class Adjust {
   /// Returns the full SDK version string, including the Flutter SDK prefix.
   ///
   /// The format is `flutter<version>@<native-version>`, e.g.
-  /// `flutter5.5.0@5.5.0`.
+  /// `flutter5.8.0@ios5.8.0`.
   static Future<String> getSdkVersion() async {
     final String sdkVersion = await _channel.invokeMethod(
       'getSdkVersion',

@@ -232,6 +232,47 @@ class AdjustConfig {
   /// provided by Google Play Services and includes it in requests.
   bool? isAppSetIdReadingEnabled;
 
+  /// Whether the SDK is allowed to read the Facebook attribution ID.
+  ///
+  /// Set to `false` to prevent the SDK from reading the Facebook ID. Defaults
+  /// to the native SDK default when `null`.
+  bool? isFbIdReadingEnabled;
+
+  /// Whether the SDK is allowed to read any device identifiers.
+  ///
+  /// Set to `false` as a shortcut for disabling every device identifier the
+  /// SDK reads. On iOS this covers the IDFA, IDFV and Facebook ID. On Android
+  /// it covers the Google Advertising ID, Android ID, App Set ID, Facebook ID,
+  /// Fire Advertising ID and identifiers from SDK plugins. When `false`, it
+  /// takes precedence over the individual reading flags.
+  bool? isDeviceIdsReadingEnabled;
+
+  /// Whether the SDK is allowed to read the Google Advertising ID (GAID).
+  ///
+  /// **Android only.** Set to `false` to prevent the SDK from reading the
+  /// GAID. Defaults to the native SDK default when `null`.
+  bool? isGoogleAdIdReadingEnabled;
+
+  /// Whether the SDK is allowed to read the Android ID.
+  ///
+  /// **Android only.** Set to `false` to prevent the SDK from reading the
+  /// Android ID. Defaults to the native SDK default when `null`.
+  bool? isAndroidIdReadingEnabled;
+
+  /// Whether the SDK is allowed to read the Amazon Fire Advertising ID.
+  ///
+  /// **Android only.** Set to `false` to prevent the SDK from reading the
+  /// Fire Advertising ID. Defaults to the native SDK default when `null`.
+  bool? isFireAdIdReadingEnabled;
+
+  /// Whether the SDK is allowed to read device identifiers provided by Adjust
+  /// SDK plugins.
+  ///
+  /// **Android only.** Covers the identifiers supplied by the IMEI and OAID
+  /// plugins. Set to `false` to prevent the SDK from reading them. Defaults
+  /// to the native SDK default when `null`.
+  bool? isDeviceIdsFromPluginsReadingEnabled;
+
   /// The time (in seconds) the SDK waits for an ATT consent response before
   /// sending the first session.
   ///
@@ -542,6 +583,24 @@ class AdjustConfig {
     }
     if (isAppSetIdReadingEnabled != null) {
       configMap['isAppSetIdReadingEnabled'] = isAppSetIdReadingEnabled.toString();
+    }
+    if (isFbIdReadingEnabled != null) {
+      configMap['isFbIdReadingEnabled'] = isFbIdReadingEnabled.toString();
+    }
+    if (isDeviceIdsReadingEnabled != null) {
+      configMap['isDeviceIdsReadingEnabled'] = isDeviceIdsReadingEnabled.toString();
+    }
+    if (isGoogleAdIdReadingEnabled != null) {
+      configMap['isGoogleAdIdReadingEnabled'] = isGoogleAdIdReadingEnabled.toString();
+    }
+    if (isAndroidIdReadingEnabled != null) {
+      configMap['isAndroidIdReadingEnabled'] = isAndroidIdReadingEnabled.toString();
+    }
+    if (isFireAdIdReadingEnabled != null) {
+      configMap['isFireAdIdReadingEnabled'] = isFireAdIdReadingEnabled.toString();
+    }
+    if (isDeviceIdsFromPluginsReadingEnabled != null) {
+      configMap['isDeviceIdsFromPluginsReadingEnabled'] = isDeviceIdsFromPluginsReadingEnabled.toString();
     }
     if (attConsentWaitingInterval != null) {
       configMap['attConsentWaitingInterval'] = attConsentWaitingInterval.toString();

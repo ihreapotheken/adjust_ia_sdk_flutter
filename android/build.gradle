@@ -1,7 +1,7 @@
 group 'com.adjust.sdk.flutter'
 version '1.0-SNAPSHOT'
 buildscript {
-    ext.kotlin_version = '1.9.22'
+    ext.kotlin_version = '2.1.0'
     repositories {
         google()
         mavenCentral()
@@ -19,7 +19,6 @@ rootProject.allprojects {
     }
 }
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 android {
     compileSdk = 36
 
@@ -39,11 +38,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+}
+
+// Kotlin is applied by the Flutter Gradle plugin (or built into AGP 9+), not by this plugin.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
     }
 }
 
 dependencies {
-    implementation 'com.adjust.sdk:adjust-android:5.7.0'
+    implementation 'com.adjust.sdk:adjust-android:5.8.0'
 }
