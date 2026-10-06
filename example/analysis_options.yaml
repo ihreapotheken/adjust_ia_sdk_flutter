@@ -1,0 +1,6 @@
+include: ../analysis_options.yaml
+
+linter:
+  rules:
+    # An app has no public API, so the rule only forces comments that restate the code.
+    public_member_api_docs: false

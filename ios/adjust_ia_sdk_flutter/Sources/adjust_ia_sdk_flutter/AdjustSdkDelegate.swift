@@ -71,7 +71,6 @@ class AdjustSdkDelegate: NSObject, AdjustDelegate {
             return
         }
 
-        // Serialize jsonResponse
         var strJsonResponse: String?
         if let jsonResponse = attribution.jsonResponse {
             if let dataJsonResponse = try? JSONSerialization.data(withJSONObject: jsonResponse, options: []) {

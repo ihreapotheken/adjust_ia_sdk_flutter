@@ -445,8 +445,6 @@ class Adjust {
     return _sdkPrefix + '@' + sdkVersion;
   }
 
-  // ios only
-
   /// Tracks an App Store subscription defined by the [subscription] object.
   ///
   /// **iOS only.** Use [AdjustAppStoreSubscription] to provide the price,
@@ -556,8 +554,6 @@ class Adjust {
     return authorizationStatus;
   }
 
-  // android only
-
   /// Tracks a Play Store subscription defined by the [subscription] object.
   ///
   /// **Android only.** Use [AdjustPlayStoreSubscription] to provide the price,
@@ -639,8 +635,6 @@ class Adjust {
     );
     return googleAdId;
   }
-
-  // For testing purposes only, do not use in production!
 
   /// Simulates the app coming to the foreground.
   ///

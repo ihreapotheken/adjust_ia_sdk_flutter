@@ -5,10 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// Cached fingerprint JS loaded from the asset bundle.
 String? _cachedFingerprintJs;
 
-/// Loads `web/fingerprint.js` from the package assets.
 Future<String> _loadFingerprintJs() async {
   _cachedFingerprintJs ??= await rootBundle.loadString(
     'packages/deferred_deeplink/web/fingerprint.js',
@@ -124,7 +122,6 @@ class WebFingerprintCollector extends StatefulWidget {
       )
       ..loadHtmlString(html);
 
-    // Timeout after 10 seconds
     Future.delayed(const Duration(seconds: 10), () {
       if (!completer.isCompleted) {
         completer.complete(null);

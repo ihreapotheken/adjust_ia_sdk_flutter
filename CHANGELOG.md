@@ -6,6 +6,7 @@
 - Added `isFbIdReadingEnabled` member to `AdjustConfig` to allow disabling the reading of the Facebook ID.
 - Added `isDeviceIdsReadingEnabled` member to `AdjustConfig` as an umbrella member alternative to setting individual device ID disabling members.
 - Added `isGoogleAdIdReadingEnabled`, `isAndroidIdReadingEnabled`, `isFireAdIdReadingEnabled` and `isDeviceIdsFromPluginsReadingEnabled` members to `AdjustConfig` to allow disabling the reading of individual device IDs on Android.
+- Added `AdjustLinkData.parse` for reading the destination path, custom parameters and label of a link delivered by Adjust, whether it arrives as a branded link, a resolved short link (`adj_link`), a platform-specific deep link (`adj_deep_link`) or a custom scheme deep link.
 - Added support for iOS integration via Swift Package Manager.
 - Added support for the iOS UIScene lifecycle. Direct deep links are now also delivered to apps that use scenes, including deep links that launch the app.
 
@@ -16,8 +17,7 @@
 #### Changed
 - Rewrote the iOS bridge in Swift and the Android bridge in Kotlin.
 - Updated the Android plugin's Gradle DSL (`compileSdk`, `minSdk`, `lint`) for compatibility with Android Gradle Plugin (AGP) 9.
-- Migrated the Android plugin to built-in Kotlin. The plugin no longer applies the Kotlin Gradle Plugin (KGP) itself.
-- Raised the minimum supported iOS version to 13.0 and the minimum supported Flutter version to 3.44.0 (Dart 3.12.0).
+- Raised the minimum supported iOS version to 13.0 and the minimum supported Flutter version to 3.38.0.
 - Updated the Adjust Signature library version to 5.0.0.
 
 #### Native SDKs

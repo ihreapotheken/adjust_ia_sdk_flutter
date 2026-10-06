@@ -8,6 +8,7 @@ import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_session_failur
 import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_session_success.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/responses/adjust_third_party_sharing_result.dart';
 import 'package:adjust_ia_sdk_flutter/src/models/adjust_store_info.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// The verbosity of SDK log output.
@@ -488,11 +489,12 @@ class AdjustConfig {
                 '[AdjustFlutter]: Received unknown native method: ${call.method}');
         }
       } catch (e) {
-        print(e.toString());
+        debugPrint(e.toString());
       }
     });
   }
 
+  /// The map sent to the native SDK over the platform channel.
   Map<String, String?> get toMap {
     Map<String, String?> configMap = {
       'sdkPrefix': sdkPrefix,

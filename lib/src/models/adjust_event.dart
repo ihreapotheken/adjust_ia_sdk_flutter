@@ -87,6 +87,7 @@ class AdjustEvent {
     _partnerParameters![key] = value;
   }
 
+  /// The map sent to the native SDK over the platform channel.
   Map<String, String?> get toMap {
     Map<String, String?> eventMap = {'eventToken': _eventToken};
 
