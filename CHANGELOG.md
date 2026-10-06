@@ -6,7 +6,6 @@
 - Added `isFbIdReadingEnabled` member to `AdjustConfig` to allow disabling the reading of the Facebook ID.
 - Added `isDeviceIdsReadingEnabled` member to `AdjustConfig` as an umbrella member alternative to setting individual device ID disabling members.
 - Added `isGoogleAdIdReadingEnabled`, `isAndroidIdReadingEnabled`, `isFireAdIdReadingEnabled` and `isDeviceIdsFromPluginsReadingEnabled` members to `AdjustConfig` to allow disabling the reading of individual device IDs on Android.
-- Added `AdjustLinkData.parse` for reading the destination path, custom parameters and label of a link delivered by Adjust, whether it arrives as a branded link, a resolved short link (`adj_link`), a platform-specific deep link (`adj_deep_link`) or a custom scheme deep link.
 - Added support for iOS integration via Swift Package Manager.
 - Added support for the iOS UIScene lifecycle. Direct deep links are now also delivered to apps that use scenes, including deep links that launch the app.
 

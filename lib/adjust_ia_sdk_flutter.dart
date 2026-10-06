@@ -14,8 +14,6 @@ export 'src/models/adjust_app_store_purchase.dart';
 export 'src/models/adjust_play_store_subscription.dart';
 export 'src/models/adjust_play_store_purchase.dart';
 
-export 'src/models/adjust_link_data.dart';
-
 export 'src/models/responses/adjust_attribution.dart';
 export 'src/models/responses/adjust_event_success.dart';
 export 'src/models/responses/adjust_event_failure.dart';

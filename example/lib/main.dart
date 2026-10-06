@@ -78,7 +78,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       config.eventFailureCallback = _handleEventFailure;
       
       config.deferredDeeplinkCallback = _handleDeferredDeeplink;
-      config.directDeeplinkCallback = _handleDirectDeeplink;
       
       config.skanUpdatedCallback = _handleSkanUpdate;
 
@@ -187,27 +186,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (jsonResponse != null) debugPrint('[AdjustExample]: JSON response: $jsonResponse');
   }
 
-  Future<void> _handleDirectDeeplink(String? link) async {
-    if (link == null) return;
-    final String? resolvedLink = await Adjust.processAndResolveDeeplink(AdjustDeeplink(link));
-    await _showLinkData('Direct deeplink', resolvedLink ?? link);
-  }
-
   void _handleDeferredDeeplink(String? uri) {
-    _showLinkData('Deferred deeplink', uri);
-  }
-
-  Future<void> _showLinkData(String title, String? link) async {
-    final AdjustLinkData? data = AdjustLinkData.parse(link);
-    if (data == null) {
-      debugPrint('[AdjustExample]: $title: $link');
-      return;
-    }
-    // links can arrive before the first frame, e.g. when they launched the app
-    await WidgetsBinding.instance.waitUntilFirstFrameRasterized;
-    if (mounted) {
-      _showDialog(title, '$link\n\nPath: ${data.path}\nParameters: ${data.parameters}\nLabel: ${data.label ?? '-'}\nAdgroup: ${data.adgroup ?? '-'}');
-    }
+    debugPrint('[AdjustExample]: Received deferred deeplink: $uri');
   }
 
   void _handleSkanUpdate(Map<String, String> skanData) {
