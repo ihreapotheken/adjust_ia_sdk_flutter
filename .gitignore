@@ -93,7 +93,7 @@ unlinked_spec.ds
 **/ios/**/Pods/
 **/ios/**/.symlinks/
 **/ios/Podfile.lock
-**/ios/**/xcshareddata/swiftpm/Package.resolved
+**/ios/**/Package.resolved
 **/ios/**/profile
 **/ios/**/xcuserdata
 **/ios/.generated/

@@ -19,6 +19,7 @@ class AdjustAppStorePurchase {
   /// StoreKit payment transaction.
   AdjustAppStorePurchase(this._productId, this._transactionId);
 
+  /// The map sent to the native SDK over the platform channel.
   Map<String, String?> get toMap {
     Map<String, String?> purchaseMap = <String, String?>{};
 

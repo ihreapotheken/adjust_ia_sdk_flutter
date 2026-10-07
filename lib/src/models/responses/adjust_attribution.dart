@@ -75,12 +75,7 @@ class AdjustAttribution {
   /// SDK.
   factory AdjustAttribution.fromMap(dynamic map) {
     try {
-      double parsedCostAmount = -1;
-      try {
-        if (map['costAmount'] != null) {
-          parsedCostAmount = double.parse(map['costAmount']);
-        }
-      } catch (ex) {}
+      final double parsedCostAmount = double.tryParse(map['costAmount']?.toString() ?? '') ?? -1;
 
       return AdjustAttribution(
         trackerToken: map['trackerToken'],

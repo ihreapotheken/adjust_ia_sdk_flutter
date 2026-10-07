@@ -31,7 +31,6 @@ class DeviceInfoCollector(private val context: Context) {
     fun collect(): Map<String, Any?> {
         val info = HashMap<String, Any?>()
 
-        // -- Device hardware --
         info["deviceModel"] = Build.MODEL
         info["deviceName"] = Build.DEVICE
         info["manufacturer"] = Build.MANUFACTURER
@@ -43,35 +42,25 @@ class DeviceInfoCollector(private val context: Context) {
         info["osVersion"] = Build.VERSION.RELEASE
         info["apiLevel"] = Build.VERSION.SDK_INT
 
-        // -- Screen --
         collectScreenInfo(info)
 
-        // -- Locale / Language --
         collectLocaleInfo(info)
 
-        // -- Keyboard languages --
         collectKeyboardLanguages(info)
 
-        // -- Timezone --
         collectTimezoneInfo(info)
 
-        // -- Carrier info --
         collectCarrierInfo(info)
 
-        // -- Disk space --
         collectDiskInfo(info)
 
-        // -- System uptime --
         info["systemUptimeSeconds"] = SystemClock.elapsedRealtime() / 1000.0
 
-        // -- Physical memory --
         collectMemoryInfo(info)
 
-        // -- Processor count --
         info["processorCount"] = Runtime.getRuntime().availableProcessors()
         info["activeProcessorCount"] = Runtime.getRuntime().availableProcessors()
 
-        // -- Battery --
         collectBatteryInfo(info)
 
         // -- Android ID (equivalent to identifierForVendor) --
@@ -80,30 +69,23 @@ class DeviceInfoCollector(private val context: Context) {
             Settings.Secure.ANDROID_ID
         ) ?: ""
 
-        // -- User interface idiom --
         info["userInterfaceIdiom"] = getDeviceIdiom()
 
-        // -- Low power mode --
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
         info["isLowPowerModeEnabled"] = powerManager?.isPowerSaveMode ?: false
 
-        // -- Timestamps --
         val now = Date()
         val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
         isoFormat.timeZone = TimeZone.getTimeZone("UTC")
         info["deviceTimestampUTC"] = isoFormat.format(now)
         info["deviceTimestampEpochMs"] = System.currentTimeMillis()
 
-        // -- Locale formatting --
         collectLocaleFormattingInfo(info)
 
-        // -- Time format --
         info["uses24HourTime"] = DateFormat.is24HourFormat(context)
 
-        // -- Metric system --
         info["usesMetricSystem"] = usesMetricSystem()
 
-        // -- Dark/light mode --
         val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         info["userInterfaceStyle"] = when (nightMode) {
             Configuration.UI_MODE_NIGHT_YES -> "dark"
@@ -114,13 +96,10 @@ class DeviceInfoCollector(private val context: Context) {
         // -- Font scale (comparable to iOS contentSizeCategory) --
         info["fontScale"] = context.resources.configuration.fontScale
 
-        // -- Device orientation --
         info["deviceOrientation"] = getOrientationString()
 
-        // -- Network type --
         collectNetworkType(info)
 
-        // -- Build identifiers --
         info["buildFingerprint"] = Build.FINGERPRINT
         info["buildDisplay"] = Build.DISPLAY
         info["buildId"] = Build.ID
@@ -133,17 +112,13 @@ class DeviceInfoCollector(private val context: Context) {
             info["securityPatch"] = Build.VERSION.SECURITY_PATCH
         }
 
-        // -- Accessibility --
         collectAccessibilityInfo(info)
 
-        // -- System features (hardware capabilities) --
         collectSystemFeatures(info)
 
-        // -- System boot time (derived: current time - uptime) --
         val bootTimeMs = System.currentTimeMillis() - SystemClock.elapsedRealtime()
         info["systemBootTimeEpochMs"] = bootTimeMs
 
-        // -- Screen timeout --
         try {
             info["screenTimeoutMs"] = Settings.System.getInt(
                 context.contentResolver,
@@ -159,13 +134,10 @@ class DeviceInfoCollector(private val context: Context) {
             )
         } catch (_: Exception) {}
 
-        // -- Number of available locales --
         info["availableLocalesCount"] = Locale.getAvailableLocales().size
 
         return info
     }
-
-    // ── Private helpers ────────────────────────────────────────────
 
     private fun collectScreenInfo(info: HashMap<String, Any?>) {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager

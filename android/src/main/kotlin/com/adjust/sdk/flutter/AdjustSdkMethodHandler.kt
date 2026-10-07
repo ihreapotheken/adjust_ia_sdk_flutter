@@ -115,17 +115,14 @@ class AdjustSdkMethodHandler(
         var logLevel: String? = null
         var isLogLevelSuppress = false
 
-        // app token
         if (configMap.containsKey("appToken")) {
             appToken = configMap["appToken"] as? String
         }
 
-        // environment
         if (configMap.containsKey("environment")) {
             environment = configMap["environment"] as? String
         }
 
-        // suppress log level
         if (configMap.containsKey("logLevel")) {
             logLevel = configMap["logLevel"] as? String
             if (logLevel != null && logLevel == "suppress") {
@@ -133,16 +130,13 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // create configuration object
         val adjustConfig = AdjustConfig(applicationContext, appToken, environment, isLogLevelSuppress)
 
-        // SDK prefix
         if (configMap.containsKey("sdkPrefix")) {
             val sdkPrefix = configMap["sdkPrefix"] as? String
             adjustConfig.setSdkPrefix(sdkPrefix)
         }
 
-        // log level
         if (configMap.containsKey("logLevel")) {
             logLevel = configMap["logLevel"] as? String
             if (logLevel != null) {
@@ -159,7 +153,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // first session delay
         if (configMap.containsKey("isFirstSessionDelayEnabled")) {
             val strIsFirstSessionDelayEnabled = configMap["isFirstSessionDelayEnabled"] as? String
             val isFirstSessionDelayEnabled = strIsFirstSessionDelayEnabled.toBoolean()
@@ -168,7 +161,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // COPPA compliance
         if (configMap.containsKey("isCoppaComplianceEnabled")) {
             val strIsCoppaComplianceEnabled = configMap["isCoppaComplianceEnabled"] as? String
             val isCoppaComplianceEnabled = strIsCoppaComplianceEnabled.toBoolean()
@@ -177,7 +169,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // Google Play Store kids compliance
         if (configMap.containsKey("isPlayStoreKidsComplianceEnabled")) {
             val strIsPlayStoreKidsComplianceEnabled = configMap["isPlayStoreKidsComplianceEnabled"] as? String
             val isPlayStoreKidsComplianceEnabled = strIsPlayStoreKidsComplianceEnabled.toBoolean()
@@ -186,7 +177,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // read device info only once
         if (configMap.containsKey("isDeviceIdsReadingOnceEnabled")) {
             val strIsDeviceIdsReadingOnceEnabled = configMap["isDeviceIdsReadingOnceEnabled"] as? String
             val isDeviceIdsReadingOnceEnabled = strIsDeviceIdsReadingOnceEnabled.toBoolean()
@@ -195,7 +185,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // app set ID reading (Android only)
         if (configMap.containsKey("isAppSetIdReadingEnabled")) {
             val strIsAppSetIdReadingEnabled = configMap["isAppSetIdReadingEnabled"] as? String
             val isAppSetIdReadingEnabled = strIsAppSetIdReadingEnabled.toBoolean()
@@ -204,7 +193,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // Facebook ID reading
         if (configMap.containsKey("isFbIdReadingEnabled")) {
             val strIsFbIdReadingEnabled = configMap["isFbIdReadingEnabled"] as? String
             val isFbIdReadingEnabled = strIsFbIdReadingEnabled.toBoolean()
@@ -213,7 +201,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // Google Advertising ID reading
         if (configMap.containsKey("isGoogleAdIdReadingEnabled")) {
             val strIsGoogleAdIdReadingEnabled = configMap["isGoogleAdIdReadingEnabled"] as? String
             val isGoogleAdIdReadingEnabled = strIsGoogleAdIdReadingEnabled.toBoolean()
@@ -222,7 +209,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // Android ID reading
         if (configMap.containsKey("isAndroidIdReadingEnabled")) {
             val strIsAndroidIdReadingEnabled = configMap["isAndroidIdReadingEnabled"] as? String
             val isAndroidIdReadingEnabled = strIsAndroidIdReadingEnabled.toBoolean()
@@ -231,7 +217,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // Fire Advertising ID reading
         if (configMap.containsKey("isFireAdIdReadingEnabled")) {
             val strIsFireAdIdReadingEnabled = configMap["isFireAdIdReadingEnabled"] as? String
             val isFireAdIdReadingEnabled = strIsFireAdIdReadingEnabled.toBoolean()
@@ -249,7 +234,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // all device IDs reading
         if (configMap.containsKey("isDeviceIdsReadingEnabled")) {
             val strIsDeviceIdsReadingEnabled = configMap["isDeviceIdsReadingEnabled"] as? String
             val isDeviceIdsReadingEnabled = strIsDeviceIdsReadingEnabled.toBoolean()
@@ -258,7 +242,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // event deduplication buffer size
         if (configMap.containsKey("eventDeduplicationIdsMaxSize")) {
             val strEventDeduplicationIdsMaxSize = configMap["eventDeduplicationIdsMaxSize"] as? String
             try {
@@ -268,7 +251,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // set store info
         if (configMap.containsKey("storeInfo")) {
             try {
                 val strStoreInfo = configMap["storeInfo"] as? String
@@ -287,7 +269,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // URL strategy
         if (configMap.containsKey("urlStrategyDomains")
             && configMap.containsKey("useSubdomains")
             && configMap.containsKey("isDataResidency")
@@ -316,19 +297,16 @@ class AdjustSdkMethodHandler(
             adjustConfig.setProcessName(processName)
         }
 
-        // default tracker
         if (configMap.containsKey("defaultTracker")) {
             val defaultTracker = configMap["defaultTracker"] as? String
             adjustConfig.setDefaultTracker(defaultTracker)
         }
 
-        // external device ID
         if (configMap.containsKey("externalDeviceId")) {
             val externalDeviceId = configMap["externalDeviceId"] as? String
             adjustConfig.setExternalDeviceId(externalDeviceId)
         }
 
-        // custom preinstall file path
         if (configMap.containsKey("preinstallFilePath")) {
             val preinstallFilePath = configMap["preinstallFilePath"] as? String
             adjustConfig.setPreinstallFilePath(preinstallFilePath)
@@ -340,7 +318,6 @@ class AdjustSdkMethodHandler(
             adjustConfig.setFbAppId(fbAppId)
         }
 
-        // sending in background
         if (configMap.containsKey("isSendingInBackgroundEnabled")) {
             val strIsSendingInBackgroundEnabled = configMap["isSendingInBackgroundEnabled"] as? String
             val isSendingInBackgroundEnabled = strIsSendingInBackgroundEnabled.toBoolean()
@@ -349,7 +326,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // cost data in attribution callback
         if (configMap.containsKey("isCostDataInAttributionEnabled")) {
             val strIsCostDataInAttributionEnabled = configMap["isCostDataInAttributionEnabled"] as? String
             val isCostDataInAttributionEnabled = strIsCostDataInAttributionEnabled.toBoolean()
@@ -358,7 +334,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // preinstall tracking
         if (configMap.containsKey("isPreinstallTrackingEnabled")) {
             val strIsPreinstallTrackingEnabled = configMap["isPreinstallTrackingEnabled"] as? String
             val isPreinstallTrackingEnabled = strIsPreinstallTrackingEnabled.toBoolean()
@@ -367,13 +342,11 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // launch deferred deep link
         if (configMap.containsKey("isDeferredDeeplinkOpeningEnabled")) {
             val strIsDeferredDeeplinkOpeningEnabled = configMap["isDeferredDeeplinkOpeningEnabled"] as? String
             isDeferredDeeplinkOpeningEnabled = strIsDeferredDeeplinkOpeningEnabled == "true"
         }
 
-        // attribution callback
         if (configMap.containsKey("attributionCallback")) {
             val dartMethodName = configMap["attributionCallback"] as? String
             if (dartMethodName != null) {
@@ -381,7 +354,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // session success callback
         if (configMap.containsKey("sessionSuccessCallback")) {
             val dartMethodName = configMap["sessionSuccessCallback"] as? String
             if (dartMethodName != null) {
@@ -389,7 +361,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // session failure callback
         if (configMap.containsKey("sessionFailureCallback")) {
             val dartMethodName = configMap["sessionFailureCallback"] as? String
             if (dartMethodName != null) {
@@ -397,7 +368,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // event success callback
         if (configMap.containsKey("eventSuccessCallback")) {
             val dartMethodName = configMap["eventSuccessCallback"] as? String
             if (dartMethodName != null) {
@@ -405,7 +375,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // event failure callback
         if (configMap.containsKey("eventFailureCallback")) {
             val dartMethodName = configMap["eventFailureCallback"] as? String
             if (dartMethodName != null) {
@@ -413,7 +382,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // deferred deep link callback
         if (configMap.containsKey("deferredDeeplinkCallback")) {
             val dartMethodName = configMap["deferredDeeplinkCallback"] as? String
             if (dartMethodName != null) {
@@ -429,7 +397,6 @@ class AdjustSdkMethodHandler(
             adjustConfig.setOnDeferredDeeplinkResponseListener { false }
         }
 
-        // remote trigger callback
         if (configMap.containsKey("remoteTriggerCallback")) {
             val dartMethodName = configMap["remoteTriggerCallback"] as? String
             if (dartMethodName != null) {
@@ -437,7 +404,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // third party sharing settings changed callback
         if (configMap.containsKey("thirdPartySharingSettingsChangedCallback")) {
             val dartMethodName = configMap["thirdPartySharingSettingsChangedCallback"] as? String
             if (dartMethodName != null) {
@@ -445,7 +411,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // initialize SDK
         Adjust.initSdk(adjustConfig)
         onSdkInitialized()
         result.success(null)
@@ -457,7 +422,6 @@ class AdjustSdkMethodHandler(
 
         val event = AdjustSdkMappers.buildEventFromMap(eventMap)
 
-        // track event
         Adjust.trackEvent(event)
         result.success(null)
     }
@@ -466,16 +430,13 @@ class AdjustSdkMethodHandler(
         @Suppress("UNCHECKED_CAST")
         val adRevenueMap = call.arguments as? Map<*, *> ?: return
 
-        // ad revenue source
         var source: String? = null
         if (adRevenueMap.containsKey("source")) {
             source = adRevenueMap["source"] as? String
         }
 
-        // create ad revenue object
         val adRevenue = AdjustAdRevenue(source)
 
-        // revenue and currency
         if (adRevenueMap.containsKey("revenue") || adRevenueMap.containsKey("currency")) {
             var revenue = -1.0
             val strRevenue = adRevenueMap["revenue"] as? String
@@ -487,32 +448,27 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // ad impressions count
         if (adRevenueMap.containsKey("adImpressionsCount")) {
             val strAdImpressionsCount = adRevenueMap["adImpressionsCount"] as? String
             val adImpressionsCount = strAdImpressionsCount?.toInt() ?: 0
             adRevenue.setAdImpressionsCount(adImpressionsCount)
         }
 
-        // ad revenue network
         if (adRevenueMap.containsKey("adRevenueNetwork")) {
             val adRevenueNetwork = adRevenueMap["adRevenueNetwork"] as? String
             adRevenue.setAdRevenueNetwork(adRevenueNetwork)
         }
 
-        // ad revenue unit
         if (adRevenueMap.containsKey("adRevenueUnit")) {
             val adRevenueUnit = adRevenueMap["adRevenueUnit"] as? String
             adRevenue.setAdRevenueUnit(adRevenueUnit)
         }
 
-        // ad revenue placement
         if (adRevenueMap.containsKey("adRevenuePlacement")) {
             val adRevenuePlacement = adRevenueMap["adRevenuePlacement"] as? String
             adRevenue.setAdRevenuePlacement(adRevenuePlacement)
         }
 
-        // callback parameters
         if (adRevenueMap.containsKey("callbackParameters")) {
             val strCallbackParametersJson = adRevenueMap["callbackParameters"] as? String
             AdjustSdkMappers.parseJsonParameters(strCallbackParametersJson) { key, value ->
@@ -520,7 +476,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // partner parameters
         if (adRevenueMap.containsKey("partnerParameters")) {
             val strPartnerParametersJson = adRevenueMap["partnerParameters"] as? String
             AdjustSdkMappers.parseJsonParameters(strPartnerParametersJson) { key, value ->
@@ -528,7 +483,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // track ad revenue
         Adjust.trackAdRevenue(adRevenue)
         result.success(null)
     }
@@ -542,10 +496,8 @@ class AdjustSdkMethodHandler(
             isEnabled = thirdPartySharingMap["isEnabled"] as? Boolean
         }
 
-        // create third party sharing object
         val thirdPartySharing = AdjustThirdPartySharing(isEnabled)
 
-        // granular options
         if (thirdPartySharingMap.containsKey("granularOptions")) {
             val strGranularOptions = thirdPartySharingMap["granularOptions"] as? String
             val arrayGranularOptions = strGranularOptions?.split("__ADJ__", limit = -1) ?: emptyList()
@@ -560,7 +512,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // partner sharing settings
         if (thirdPartySharingMap.containsKey("partnerSharingSettings")) {
             val strPartnerSharingSettings = thirdPartySharingMap["partnerSharingSettings"] as? String
             val arrayPartnerSharingSettings = strPartnerSharingSettings?.split("__ADJ__", limit = -1) ?: emptyList()
@@ -575,7 +526,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // track third party sharing
         Adjust.trackThirdPartySharing(thirdPartySharing)
         result.success(null)
     }
@@ -870,7 +820,6 @@ class AdjustSdkMethodHandler(
         @Suppress("UNCHECKED_CAST")
         val subscriptionMap = call.arguments as? Map<*, *> ?: return
 
-        // price
         var price: Long = -1
         if (subscriptionMap.containsKey("price")) {
             try {
@@ -879,37 +828,31 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // currency
         var currency: String? = null
         if (subscriptionMap.containsKey("currency")) {
             currency = subscriptionMap["currency"] as? String
         }
 
-        // SKU
         var sku: String? = null
         if (subscriptionMap.containsKey("sku")) {
             sku = subscriptionMap["sku"] as? String
         }
 
-        // order ID
         var orderId: String? = null
         if (subscriptionMap.containsKey("orderId")) {
             orderId = subscriptionMap["orderId"] as? String
         }
 
-        // Signature
         var signature: String? = null
         if (subscriptionMap.containsKey("signature")) {
             signature = subscriptionMap["signature"] as? String
         }
 
-        // purchase token
         var purchaseToken: String? = null
         if (subscriptionMap.containsKey("purchaseToken")) {
             purchaseToken = subscriptionMap["purchaseToken"] as? String
         }
 
-        // create subscription object
         val subscription = AdjustPlayStoreSubscription(
             price,
             currency,
@@ -919,7 +862,6 @@ class AdjustSdkMethodHandler(
             purchaseToken
         )
 
-        // purchase time
         if (subscriptionMap.containsKey("purchaseTime")) {
             try {
                 val purchaseTime = subscriptionMap["purchaseTime"].toString().toLong()
@@ -928,7 +870,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // callback parameters
         if (subscriptionMap.containsKey("callbackParameters")) {
             val strCallbackParametersJson = subscriptionMap["callbackParameters"] as? String
             AdjustSdkMappers.parseJsonParameters(strCallbackParametersJson) { key, value ->
@@ -936,7 +877,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // partner parameters
         if (subscriptionMap.containsKey("partnerParameters")) {
             val strPartnerParametersJson = subscriptionMap["partnerParameters"] as? String
             AdjustSdkMappers.parseJsonParameters(strPartnerParametersJson) { key, value ->
@@ -944,7 +884,6 @@ class AdjustSdkMethodHandler(
             }
         }
 
-        // track subscription
         Adjust.trackPlayStoreSubscription(subscription)
         result.success(null)
     }
@@ -953,22 +892,18 @@ class AdjustSdkMethodHandler(
         @Suppress("UNCHECKED_CAST")
         val purchaseMap = call.arguments as? Map<*, *> ?: return
 
-        // product ID
         var productId: String? = null
         if (purchaseMap.containsKey("productId")) {
             productId = purchaseMap["productId"] as? String
         }
 
-        // purchase token
         var purchaseToken: String? = null
         if (purchaseMap.containsKey("purchaseToken")) {
             purchaseToken = purchaseMap["purchaseToken"] as? String
         }
 
-        // create purchase instance
         val purchase = AdjustPlayStorePurchase(productId, purchaseToken)
 
-        // verify purchase
         Adjust.verifyPlayStorePurchase(purchase) { verificationResult ->
             val adjustPurchaseMap = AdjustSdkMappers.verificationResultToMap(verificationResult)
             result.success(adjustPurchaseMap)
@@ -981,7 +916,6 @@ class AdjustSdkMethodHandler(
 
         val event = AdjustSdkMappers.buildEventFromMap(eventMap)
 
-        // verify and track purchase
         Adjust.verifyAndTrackPlayStorePurchase(event) { verificationResult ->
             val adjustPurchaseMap = AdjustSdkMappers.verificationResultToMap(verificationResult)
             result.success(adjustPurchaseMap)

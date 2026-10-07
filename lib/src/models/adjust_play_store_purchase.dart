@@ -20,6 +20,7 @@ class AdjustPlayStorePurchase {
   /// Google Play Billing Library upon a successful purchase.
   AdjustPlayStorePurchase(this._productId, this._purchaseToken);
 
+  /// The map sent to the native SDK over the platform channel.
   Map<String, String?> get toMap {
     Map<String, String?> purchaseMap = <String, String?>{};
 
