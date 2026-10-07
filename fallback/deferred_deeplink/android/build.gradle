@@ -1,7 +1,7 @@
 group 'com.adjust.deferred_deeplink'
 version '1.0-SNAPSHOT'
 buildscript {
-    ext.kotlin_version = '1.9.22'
+    ext.kotlin_version = '2.1.0'
     repositories {
         google()
         mavenCentral()
@@ -19,9 +19,8 @@ rootProject.allprojects {
     }
 }
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 android {
-    compileSdkVersion 36
+    compileSdk = 36
     namespace 'com.adjust.deferred_deeplink'
 
     compileOptions {
@@ -29,19 +28,22 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
     defaultConfig {
-        minSdkVersion 21
+        minSdk = 21
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-    lintOptions {
+    lint {
         disable 'InvalidPackage'
+    }
+}
+
+// Kotlin is applied by the Flutter Gradle plugin (or built into AGP 9+), not by this plugin.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }

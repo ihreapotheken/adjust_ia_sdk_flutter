@@ -175,6 +175,8 @@ class AdjustSdkMethodHandler: NSObject {
         let isAdServicesEnabled = args["isAdServicesEnabled"] as? String
         let isIdfaReadingEnabled = args["isIdfaReadingEnabled"] as? String
         let isIdfvReadingEnabled = args["isIdfvReadingEnabled"] as? String
+        let isFbIdReadingEnabled = args["isFbIdReadingEnabled"] as? String
+        let isDeviceIdsReadingEnabled = args["isDeviceIdsReadingEnabled"] as? String
         let strStoreInfoJson = args["storeInfo"] as? String
         let isSkanAttributionEnabled = args["isSkanAttributionEnabled"] as? String
         let isDeviceIdsReadingOnceEnabled = args["isDeviceIdsReadingOnceEnabled"] as? String
@@ -322,6 +324,20 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
+        // Facebook ID reading
+        if AdjustSdkMappers.isFieldValid(isFbIdReadingEnabled) {
+            if (isFbIdReadingEnabled! as NSString).boolValue == false {
+                adjustConfig?.disableFbIdReading()
+            }
+        }
+
+        // all device IDs reading
+        if AdjustSdkMappers.isFieldValid(isDeviceIdsReadingEnabled) {
+            if (isDeviceIdsReadingEnabled! as NSString).boolValue == false {
+                adjustConfig?.disableDeviceIdsReading()
+            }
+        }
+
         // SKAdNetwork attribution
         if AdjustSdkMappers.isFieldValid(isSkanAttributionEnabled) {
             if (isSkanAttributionEnabled! as NSString).boolValue == false {
@@ -350,7 +366,8 @@ class AdjustSdkMethodHandler: NSObject {
             || dartDeferredDeeplinkCallback != nil
             || dartSkanUpdatedCallback != nil
             || dartRemoteTriggerCallback != nil
-            || dartThirdPartySharingSettingsChangedCallback != nil {
+            || dartThirdPartySharingSettingsChangedCallback != nil
+            || !launchDeferredDeeplink {
             if let channel = self.channel {
                 adjustConfig?.delegate = AdjustSdkDelegate.getInstance(
                     attributionCallback: dartAttributionCallback,

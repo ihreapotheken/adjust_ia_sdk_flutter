@@ -1,3 +1,31 @@
+### Version 5.8.0 (5th October 2026)
+#### Added
+- Added support for direct deep link callbacks. You can now receive deep links that open the app by assigning the `directDeeplinkCallback` member of your `AdjustConfig` instance.
+- Added support for remote trigger callbacks. You can now receive remote triggers sent by the Adjust backend by assigning the `remoteTriggerCallback` member of your `AdjustConfig` instance.
+- Added `Adjust.getThirdPartySharingSettingsWithTimeout` method and the `thirdPartySharingSettingsChangedCallback` member of `AdjustConfig` for reading the current third-party-sharing settings from the Adjust backend and receiving updates when they change.
+- Added `isFbIdReadingEnabled` member to `AdjustConfig` to allow disabling the reading of the Facebook ID.
+- Added `isDeviceIdsReadingEnabled` member to `AdjustConfig` as an umbrella member alternative to setting individual device ID disabling members.
+- Added `isGoogleAdIdReadingEnabled`, `isAndroidIdReadingEnabled`, `isFireAdIdReadingEnabled` and `isDeviceIdsFromPluginsReadingEnabled` members to `AdjustConfig` to allow disabling the reading of individual device IDs on Android.
+- Added support for iOS integration via Swift Package Manager.
+- Added support for the iOS UIScene lifecycle. Direct deep links are now also delivered to apps that use scenes, including deep links that launch the app.
+
+#### Fixed
+- Fixed deferred deep links not being opened automatically on iOS when any `AdjustConfig` callback other than `deferredDeeplinkCallback` was set.
+- Fixed `isDeferredDeeplinkOpeningEnabled` being ignored when it was set to `false` without a `deferredDeeplinkCallback`.
+
+#### Changed
+- Rewrote the iOS bridge in Swift and the Android bridge in Kotlin.
+- Updated the Android plugin's Gradle DSL (`compileSdk`, `minSdk`, `lint`) for compatibility with Android Gradle Plugin (AGP) 9.
+- Migrated the Android plugin to built-in Kotlin. The plugin no longer applies the Kotlin Gradle Plugin (KGP) itself.
+- Raised the minimum supported iOS version to 13.0 and the minimum supported Flutter version to 3.44.0 (Dart 3.12.0).
+- Updated the Adjust Signature library version to 5.0.0.
+
+#### Native SDKs
+- **iOS:** [v5.8.0](https://github.com/adjust/ios_sdk/tree/v5.8.0)
+- **Android:** [v5.8.0](https://github.com/adjust/android_sdk/tree/v5.8.0)
+
+---
+
 ### Version 5.5.0 (6th December 2025)
 #### Added
 - Added `getAdidWithTimeout` method to the `Adjust` API to allow retrieving the ADID with a specified timeout. If the value is not obtained in time, nil is returned.
