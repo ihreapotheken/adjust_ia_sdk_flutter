@@ -16,8 +16,7 @@
 #### Changed
 - Rewrote the iOS bridge in Swift and the Android bridge in Kotlin.
 - Updated the Android plugin's Gradle DSL (`compileSdk`, `minSdk`, `lint`) for compatibility with Android Gradle Plugin (AGP) 9.
-- Migrated the Android plugin to built-in Kotlin. The plugin no longer applies the Kotlin Gradle Plugin (KGP) itself.
-- Raised the minimum supported iOS version to 13.0 and the minimum supported Flutter version to 3.44.0 (Dart 3.12.0).
+- Raised the minimum supported iOS version to 13.0 and the minimum supported Flutter version to 3.38.0.
 - Updated the Adjust Signature library version to 5.0.0.
 
 #### Native SDKs

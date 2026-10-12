@@ -20,6 +20,7 @@ class AdjustDeeplink {
   /// Creates an [AdjustDeeplink] with the given [deeplink] URL string.
   AdjustDeeplink(this.deeplink);
 
+  /// The map sent to the native SDK over the platform channel.
   Map<String, String?> get toMap {
     Map<String, String?> deeplinkMap = <String, String?>{};
 

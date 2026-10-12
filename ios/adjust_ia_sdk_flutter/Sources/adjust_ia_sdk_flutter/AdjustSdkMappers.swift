@@ -66,12 +66,10 @@ struct AdjustSdkMappers {
             return false
         }
 
-        // check if its an instance of NSNull
         if field is NSNull {
             return false
         }
 
-        // if field can be converted to a string, check if it has any content
         let str = String(describing: field)
         if str.isEmpty {
             return false

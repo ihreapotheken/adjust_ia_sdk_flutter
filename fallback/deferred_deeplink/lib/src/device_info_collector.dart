@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 /// Dart-side fields are collected directly. iOS-native fields are
 /// fetched via the `com.adjust.deferred_deeplink/methods` MethodChannel.
 class DeviceInfoCollector {
-  /// The MethodChannel shared with the plugin.
   static const MethodChannel _channel = MethodChannel(
     'com.adjust.deferred_deeplink/methods',
   );
@@ -55,7 +54,6 @@ class DeviceInfoCollector {
       'deviceTimestamp': DateTime.now().toUtc().toIso8601String(),
       'deviceLocalTimestamp': DateTime.now().toIso8601String(),
 
-      // -- Accessibility --
       'accessibleNavigation': dispatcher.accessibilityFeatures.accessibleNavigation,
       'boldText': dispatcher.accessibilityFeatures.boldText,
       'highContrast': dispatcher.accessibilityFeatures.highContrast,
@@ -65,7 +63,6 @@ class DeviceInfoCollector {
       'semanticsEnabled': dispatcher.semanticsEnabled,
       'alwaysUse24HourFormat': dispatcher.alwaysUse24HourFormat,
 
-      // -- Platform brightness --
       'platformBrightness': dispatcher.platformBrightness.name,
 
       // -- View insets (notch / safe area) --

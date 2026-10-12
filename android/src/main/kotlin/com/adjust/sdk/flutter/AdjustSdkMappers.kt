@@ -21,13 +21,10 @@ object AdjustSdkMappers {
     private const val TAG = "AdjustBridge"
 
     fun buildEventFromMap(eventMap: Map<*, *>): AdjustEvent {
-        // event token
         val eventToken = eventMap["eventToken"] as? String
 
-        // create event object
         val event = AdjustEvent(eventToken)
 
-        // revenue and currency
         if (eventMap.containsKey("revenue") || eventMap.containsKey("currency")) {
             var revenue = -1.0
             val strRevenue = eventMap["revenue"] as? String
@@ -39,31 +36,26 @@ object AdjustSdkMappers {
             event.setRevenue(revenue, currency)
         }
 
-        // event deduplication
         if (eventMap.containsKey("deduplicationId")) {
             val deduplicationId = eventMap["deduplicationId"] as? String
             event.setDeduplicationId(deduplicationId)
         }
 
-        // product ID
         if (eventMap.containsKey("productId")) {
             val productId = eventMap["productId"] as? String
             event.setProductId(productId)
         }
 
-        // purchase token
         if (eventMap.containsKey("purchaseToken")) {
             val purchaseToken = eventMap["purchaseToken"] as? String
             event.setPurchaseToken(purchaseToken)
         }
 
-        // callback ID
         if (eventMap.containsKey("callbackId")) {
             val callbackId = eventMap["callbackId"] as? String
             event.setCallbackId(callbackId)
         }
 
-        // callback parameters
         if (eventMap.containsKey("callbackParameters")) {
             val strCallbackParametersJson = eventMap["callbackParameters"] as? String
             parseJsonParameters(strCallbackParametersJson) { key, value ->
@@ -71,7 +63,6 @@ object AdjustSdkMappers {
             }
         }
 
-        // partner parameters
         if (eventMap.containsKey("partnerParameters")) {
             val strPartnerParametersJson = eventMap["partnerParameters"] as? String
             parseJsonParameters(strPartnerParametersJson) { key, value ->

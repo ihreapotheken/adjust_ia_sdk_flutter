@@ -32,12 +32,7 @@ class AdjustPurchaseVerificationResult {
   /// from the native SDK.
   factory AdjustPurchaseVerificationResult.fromMap(dynamic map) {
     try {
-      int parsedCode = -1;
-      try {
-        if (map['code'] != null) {
-          parsedCode = int.parse(map['code']);
-        }
-      } catch (ex) {}
+      final int parsedCode = int.tryParse(map['code']?.toString() ?? '') ?? -1;
 
       return AdjustPurchaseVerificationResult(
           parsedCode,
@@ -50,6 +45,7 @@ class AdjustPurchaseVerificationResult {
     }
   }
 
+  /// This result as a map, keyed like the map received from the native SDK.
   Map<String, String?> get toMap {
     Map<String, String?> verificationInfoMap = <String, String?>{};
 

@@ -6,13 +6,11 @@ class DeviceInfoCollector {
     func collect() -> [String: Any] {
         var info: [String: Any] = [:]
 
-        // -- Device hardware --
         info["deviceModel"] = deviceModelIdentifier()
         info["deviceName"] = UIDevice.current.name
         info["systemName"] = UIDevice.current.systemName
         info["osVersion"] = UIDevice.current.systemVersion
 
-        // -- Screen --
         let screen = UIScreen.main
         info["screenScale"] = screen.scale
         info["nativeBoundsWidth"] = screen.nativeBounds.width
@@ -21,19 +19,16 @@ class DeviceInfoCollector {
         info["screenBoundsHeight"] = screen.bounds.height
         info["screenBrightness"] = screen.brightness
 
-        // -- Locale / Language --
         info["preferredLanguages"] = Locale.preferredLanguages
         info["currentLocaleIdentifier"] = Locale.current.identifier
         info["currentLocaleLanguageCode"] = Locale.current.languageCode
         info["currentLocaleRegionCode"] = Locale.current.regionCode ?? ""
 
-        // -- Keyboard languages --
         let keyboardLanguages = UITextInputMode.activeInputModes.compactMap {
             $0.primaryLanguage
         }
         info["keyboardLanguages"] = keyboardLanguages
 
-        // -- Timezone --
         let tz = TimeZone.current
         info["timezoneIdentifier"] = tz.identifier
         info["timezoneAbbreviation"] = tz.abbreviation() ?? ""
@@ -50,7 +45,6 @@ class DeviceInfoCollector {
             info["isoCountryCode"] = firstCarrier.isoCountryCode ?? ""
         }
 
-        // -- Disk space --
         if let attrs = try? FileManager.default.attributesOfFileSystem(
             forPath: NSHomeDirectory()
         ) {
@@ -62,28 +56,21 @@ class DeviceInfoCollector {
             }
         }
 
-        // -- System uptime --
         info["systemUptimeSeconds"] = ProcessInfo.processInfo.systemUptime
 
-        // -- Physical memory --
         info["physicalMemoryBytes"] = ProcessInfo.processInfo.physicalMemory
 
-        // -- Processor count --
         info["processorCount"] = ProcessInfo.processInfo.processorCount
         info["activeProcessorCount"] = ProcessInfo.processInfo.activeProcessorCount
 
-        // -- Battery --
         UIDevice.current.isBatteryMonitoringEnabled = true
         info["batteryLevel"] = UIDevice.current.batteryLevel
         info["batteryState"] = batteryStateString(UIDevice.current.batteryState)
 
-        // -- Identifier for vendor --
         info["identifierForVendor"] = UIDevice.current.identifierForVendor?.uuidString ?? ""
 
-        // -- User interface idiom --
         info["userInterfaceIdiom"] = idiomString(UIDevice.current.userInterfaceIdiom)
 
-        // -- Low power mode --
         info["isLowPowerModeEnabled"] = ProcessInfo.processInfo.isLowPowerModeEnabled
 
         // -- Timestamps (comparable to JS Date.now() / new Date().toISOString()) --
@@ -138,7 +125,6 @@ class DeviceInfoCollector {
             info["currentRadioAccessTechnology"] = radioType
         }
 
-        // -- Accessibility --
         info["isVoiceOverRunning"] = UIAccessibility.isVoiceOverRunning
         info["isSwitchControlRunning"] = UIAccessibility.isSwitchControlRunning
         info["isClosedCaptioningEnabled"] = UIAccessibility.isClosedCaptioningEnabled
@@ -152,14 +138,11 @@ class DeviceInfoCollector {
             info["shouldDifferentiateWithoutColor"] = UIAccessibility.shouldDifferentiateWithoutColor
         }
 
-        // -- Thermal state --
         info["thermalState"] = thermalStateString(ProcessInfo.processInfo.thermalState)
 
-        // -- System boot time (derived: current time - uptime) --
         let bootTimestamp = Date().timeIntervalSince1970 - ProcessInfo.processInfo.systemUptime
         info["systemBootTimeEpochMs"] = Int64(bootTimestamp * 1000)
 
-        // -- Multitasking --
         info["isMultitaskingSupported"] = UIDevice.current.isMultitaskingSupported
 
         // -- Screen max refresh rate (ProMotion) --
@@ -167,10 +150,8 @@ class DeviceInfoCollector {
             info["screenMaximumFramesPerSecond"] = UIScreen.main.maximumFramesPerSecond
         }
 
-        // -- Number of available locales --
         info["availableLocalesCount"] = Locale.availableIdentifiers.count
 
-        // -- App / process info --
         let processInfo = ProcessInfo.processInfo
         info["processName"] = processInfo.processName
         info["hostName"] = processInfo.hostName
@@ -178,8 +159,6 @@ class DeviceInfoCollector {
 
         return info
     }
-
-    // MARK: - Private helpers
 
     private func deviceModelIdentifier() -> String {
         var systemInfo = utsname()

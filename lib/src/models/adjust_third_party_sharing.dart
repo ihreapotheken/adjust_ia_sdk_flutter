@@ -56,6 +56,7 @@ class AdjustThirdPartySharing {
     _partnerSharingSettings.add(value.toString());
   }
 
+  /// The map sent to the native SDK over the platform channel.
   Map<String, Object?> get toMap {
     Map<String, Object?> thirdPartySharingMap = {'isEnabled': _isEnabled};
     if (_granularOptions.isNotEmpty) {

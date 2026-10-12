@@ -194,7 +194,6 @@ class AdjustSdkMethodHandler: NSObject {
             ? (isDeferredDeeplinkOpeningEnabled! as NSString).boolValue
             : true
 
-        // suppress log level
         var allowSuppressLogLevel = false
         if AdjustSdkMappers.isFieldValid(logLevel) {
             if ADJLogger.logLevel(from: logLevel!.lowercased()) == ADJLogLevel.suppress {
@@ -208,55 +207,46 @@ class AdjustSdkMethodHandler: NSObject {
             suppressLogLevel: allowSuppressLogLevel
         )
 
-        // SDK prefix
         if AdjustSdkMappers.isFieldValid(sdkPrefix) {
             adjustConfig?.sdkPrefix = sdkPrefix!
         }
 
-        // log level
         if AdjustSdkMappers.isFieldValid(logLevel) {
             adjustConfig?.logLevel = ADJLogger.logLevel(from: logLevel!.lowercased())
         }
 
-        // LinkMe
         if AdjustSdkMappers.isFieldValid(isLinkMeEnabled) {
             if (isLinkMeEnabled! as NSString).boolValue == true {
                 adjustConfig?.enableLinkMe()
             }
         }
 
-        // COPPA compliance
         if AdjustSdkMappers.isFieldValid(isCoppaComplianceEnabled) {
             if (isCoppaComplianceEnabled! as NSString).boolValue == true {
                 adjustConfig?.enableCoppaCompliance()
             }
         }
 
-        // first session delay
         if AdjustSdkMappers.isFieldValid(isFirstSessionDelayEnabled) {
             if (isFirstSessionDelayEnabled! as NSString).boolValue == true {
                 adjustConfig?.enableFirstSessionDelay()
             }
         }
 
-        // ATT usage
         if AdjustSdkMappers.isFieldValid(isAppTrackingTransparencyUsageEnabled) {
             if (isAppTrackingTransparencyUsageEnabled! as NSString).boolValue == false {
                 adjustConfig?.disableAppTrackingTransparencyUsage()
             }
         }
 
-        // default tracker
         if AdjustSdkMappers.isFieldValid(defaultTracker) {
             adjustConfig?.defaultTracker = defaultTracker!
         }
 
-        // external device ID
         if AdjustSdkMappers.isFieldValid(externalDeviceId) {
             adjustConfig?.externalDeviceId = externalDeviceId!
         }
 
-        // store info
         if AdjustSdkMappers.isFieldValid(strStoreInfoJson) {
             if let jsonData = strStoreInfoJson!.data(using: .utf8),
                let storeInfoDict = try? JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any] {
@@ -274,7 +264,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // URL strategy
         if AdjustSdkMappers.isFieldValid(strUrlStrategyDomainsJson) {
             if let data = strUrlStrategyDomainsJson!.data(using: .utf8),
                let urlStrategyDomainsArray = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String] {
@@ -284,80 +273,68 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // sending in background
         if AdjustSdkMappers.isFieldValid(isSendingInBackgroundEnabled) {
             if (isSendingInBackgroundEnabled! as NSString).boolValue == true {
                 adjustConfig?.enableSendingInBackground()
             }
         }
 
-        // event deduplication
         if eventDeduplicationIdsMaxSize > 0 {
             adjustConfig?.eventDeduplicationIdsMaxSize = Int(eventDeduplicationIdsMaxSize)
         }
 
-        // cost data in attribution callback
         if AdjustSdkMappers.isFieldValid(isCostDataInAttributionEnabled) {
             if (isCostDataInAttributionEnabled! as NSString).boolValue == true {
                 adjustConfig?.enableCostDataInAttribution()
             }
         }
 
-        // AdServices.framework interaction
         if AdjustSdkMappers.isFieldValid(isAdServicesEnabled) {
             if (isAdServicesEnabled! as NSString).boolValue == false {
                 adjustConfig?.disableAdServices()
             }
         }
 
-        // IDFA reading
         if AdjustSdkMappers.isFieldValid(isIdfaReadingEnabled) {
             if (isIdfaReadingEnabled! as NSString).boolValue == false {
                 adjustConfig?.disableIdfaReading()
             }
         }
 
-        // IDFV reading
         if AdjustSdkMappers.isFieldValid(isIdfvReadingEnabled) {
             if (isIdfvReadingEnabled! as NSString).boolValue == false {
                 adjustConfig?.disableIdfvReading()
             }
         }
 
-        // Facebook ID reading
         if AdjustSdkMappers.isFieldValid(isFbIdReadingEnabled) {
             if (isFbIdReadingEnabled! as NSString).boolValue == false {
                 adjustConfig?.disableFbIdReading()
             }
         }
 
-        // all device IDs reading
         if AdjustSdkMappers.isFieldValid(isDeviceIdsReadingEnabled) {
             if (isDeviceIdsReadingEnabled! as NSString).boolValue == false {
                 adjustConfig?.disableDeviceIdsReading()
             }
         }
 
-        // SKAdNetwork attribution
         if AdjustSdkMappers.isFieldValid(isSkanAttributionEnabled) {
             if (isSkanAttributionEnabled! as NSString).boolValue == false {
                 adjustConfig?.disableSkanAttribution()
             }
         }
 
-        // read device info once
         if AdjustSdkMappers.isFieldValid(isDeviceIdsReadingOnceEnabled) {
             if (isDeviceIdsReadingOnceEnabled! as NSString).boolValue == true {
                 adjustConfig?.enableDeviceIdsReadingOnce()
             }
         }
 
-        // ATT consent delay
         if AdjustSdkMappers.isFieldValid(attConsentWaitingInterval) {
             adjustConfig?.attConsentWaitingInterval = UInt((attConsentWaitingInterval! as NSString).integerValue)
         }
 
-        // callbacks
         if dartAttributionCallback != nil
             || dartSessionSuccessCallback != nil
             || dartSessionFailureCallback != nil
@@ -385,7 +362,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // start SDK
         if let adjustConfig = adjustConfig {
             Adjust.initSdk(adjustConfig)
         }
@@ -409,36 +385,29 @@ class AdjustSdkMethodHandler: NSObject {
         let strCallbackParametersJson = args["callbackParameters"] as? String
         let strPartnerParametersJson = args["partnerParameters"] as? String
 
-        // create event object
         let adjustEvent = ADJEvent(eventToken: eventToken ?? "")
 
-        // revenue and currency
         if AdjustSdkMappers.isFieldValid(revenue) {
             let revenueValue = Double(revenue!) ?? 0.0
             adjustEvent?.setRevenue(revenueValue, currency: currency ?? "")
         }
 
-        // product ID
         if AdjustSdkMappers.isFieldValid(productId) {
             adjustEvent?.setProductId(productId!)
         }
 
-        // transaction ID
         if AdjustSdkMappers.isFieldValid(transactionId) {
             adjustEvent?.setTransactionId(transactionId!)
         }
 
-        // deduplication ID
         if AdjustSdkMappers.isFieldValid(deduplicationId) {
             adjustEvent?.setDeduplicationId(deduplicationId!)
         }
 
-        // callback ID
         if AdjustSdkMappers.isFieldValid(callbackId) {
             adjustEvent?.setCallbackId(callbackId!)
         }
 
-        // callback parameters
         if let strCallbackParametersJson = strCallbackParametersJson {
             if let data = strCallbackParametersJson.data(using: .utf8),
                let callbackParametersJson = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String] {
@@ -448,7 +417,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // partner parameters
         if let strPartnerParametersJson = strPartnerParametersJson {
             if let data = strPartnerParametersJson.data(using: .utf8),
                let partnerParametersJson = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String] {
@@ -458,7 +426,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // track event
         if let adjustEvent = adjustEvent {
             Adjust.trackEvent(adjustEvent)
         }
@@ -481,37 +448,30 @@ class AdjustSdkMethodHandler: NSObject {
         let strCallbackParametersJson = args["callbackParameters"] as? String
         let strPartnerParametersJson = args["partnerParameters"] as? String
 
-        // create ad revenue object
         let adjustAdRevenue = ADJAdRevenue(source: source ?? "")
 
-        // revenue
         if AdjustSdkMappers.isFieldValid(revenue) {
             let revenueValue = Double(revenue!) ?? 0.0
             adjustAdRevenue?.setRevenue(revenueValue, currency: currency ?? "")
         }
 
-        // ad impressions count
         if AdjustSdkMappers.isFieldValid(adImpressionsCount) {
             let adImpressionsCountValue = Int32(adImpressionsCount!) ?? 0
             adjustAdRevenue?.setAdImpressionsCount(adImpressionsCountValue)
         }
 
-        // ad revenue network
         if AdjustSdkMappers.isFieldValid(adRevenueNetwork) {
             adjustAdRevenue?.setAdRevenueNetwork(adRevenueNetwork!)
         }
 
-        // ad revenue unit
         if AdjustSdkMappers.isFieldValid(adRevenueUnit) {
             adjustAdRevenue?.setAdRevenueUnit(adRevenueUnit!)
         }
 
-        // ad revenue placement
         if AdjustSdkMappers.isFieldValid(adRevenuePlacement) {
             adjustAdRevenue?.setAdRevenuePlacement(adRevenuePlacement!)
         }
 
-        // callback parameters
         if let strCallbackParametersJson = strCallbackParametersJson {
             if let data = strCallbackParametersJson.data(using: .utf8),
                let callbackParametersJson = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String] {
@@ -521,7 +481,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // partner parameters
         if let strPartnerParametersJson = strPartnerParametersJson {
             if let data = strPartnerParametersJson.data(using: .utf8),
                let partnerParametersJson = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String] {
@@ -531,7 +490,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // track ad revenue
         if let adjustAdRevenue = adjustAdRevenue {
             Adjust.trackAdRevenue(adjustAdRevenue)
         }
@@ -552,7 +510,6 @@ class AdjustSdkMethodHandler: NSObject {
             isEnabled: AdjustSdkMappers.isFieldValid(isEnabled) ? isEnabled : nil
         )
 
-        // granular options
         if let strGranularOptions = strGranularOptions {
             let arrayGranularOptions = strGranularOptions.components(separatedBy: "__ADJ__")
             var i = 0
@@ -568,7 +525,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // partner sharing settings
         if let strPartnerSharingSettings = strPartnerSharingSettings {
             let arrayPartnerSharingSettings = strPartnerSharingSettings.components(separatedBy: "__ADJ__")
             var i = 0
@@ -584,7 +540,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // track third party sharing
         if let adjustThirdPartySharing = adjustThirdPartySharing {
             Adjust.trackThirdPartySharing(adjustThirdPartySharing)
         }
@@ -938,7 +893,6 @@ class AdjustSdkMethodHandler: NSObject {
         let strCallbackParametersJson = args["callbackParameters"] as? String
         let strPartnerParametersJson = args["partnerParameters"] as? String
 
-        // price
         var priceValue: NSDecimalNumber?
         if AdjustSdkMappers.isFieldValid(price) {
             priceValue = NSDecimalNumber(string: price!)
@@ -950,19 +904,16 @@ class AdjustSdkMethodHandler: NSObject {
             transactionId: transactionId ?? ""
         )
 
-        // transaction date
         if AdjustSdkMappers.isFieldValid(transactionDate) {
             let transactionDateInterval = Double(transactionDate!) ?? 0.0
             let oTransactionDate = Date(timeIntervalSince1970: transactionDateInterval)
             subscription?.setTransactionDate(oTransactionDate)
         }
 
-        // sales region
         if AdjustSdkMappers.isFieldValid(salesRegion) {
             subscription?.setSalesRegion(salesRegion!)
         }
 
-        // callback parameters
         if let strCallbackParametersJson = strCallbackParametersJson {
             if let data = strCallbackParametersJson.data(using: .utf8),
                let callbackParametersJson = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String] {
@@ -972,7 +923,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // partner parameters
         if let strPartnerParametersJson = strPartnerParametersJson {
             if let data = strPartnerParametersJson.data(using: .utf8),
                let partnerParametersJson = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String] {
@@ -982,7 +932,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // track subscription
         if let subscription = subscription {
             Adjust.trackAppStoreSubscription(subscription)
         }
@@ -1003,7 +952,6 @@ class AdjustSdkMethodHandler: NSObject {
             productId: productId ?? ""
         )
 
-        // verify purchase
         if let purchase = purchase {
             Adjust.verifyAppStorePurchase(purchase) { verificationResult in
                 let dictionary = NSMutableDictionary()
@@ -1048,33 +996,27 @@ class AdjustSdkMethodHandler: NSObject {
 
         let adjustEvent = ADJEvent(eventToken: eventToken ?? "")
 
-        // revenue
         if AdjustSdkMappers.isFieldValid(revenue) {
             let revenueValue = Double(revenue!) ?? 0.0
             adjustEvent?.setRevenue(revenueValue, currency: currency ?? "")
         }
 
-        // product ID
         if AdjustSdkMappers.isFieldValid(productId) {
             adjustEvent?.setProductId(productId!)
         }
 
-        // transaction ID
         if AdjustSdkMappers.isFieldValid(transactionId) {
             adjustEvent?.setTransactionId(transactionId!)
         }
 
-        // deduplication ID
         if AdjustSdkMappers.isFieldValid(deduplicationId) {
             adjustEvent?.setDeduplicationId(deduplicationId!)
         }
 
-        // callback ID
         if AdjustSdkMappers.isFieldValid(callbackId) {
             adjustEvent?.setCallbackId(callbackId!)
         }
 
-        // callback parameters
         if let strCallbackParametersJson = strCallbackParametersJson {
             if let data = strCallbackParametersJson.data(using: .utf8),
                let callbackParametersJson = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String] {
@@ -1084,7 +1026,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // partner parameters
         if let strPartnerParametersJson = strPartnerParametersJson {
             if let data = strPartnerParametersJson.data(using: .utf8),
                let partnerParametersJson = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String] {
@@ -1094,7 +1035,6 @@ class AdjustSdkMethodHandler: NSObject {
             }
         }
 
-        // verify and track app store purchase
         if let adjustEvent = adjustEvent {
             Adjust.verifyAndTrackAppStorePurchase(adjustEvent) { verificationResult in
                 let dictionary = NSMutableDictionary()

@@ -68,7 +68,7 @@ class DeferredDeeplink {
     var remaining = services.length;
     var isTimerStarted = false;
 
-    DeferredDeeplinkResult _finalResult() =>
+    DeferredDeeplinkResult finalResult() =>
         DeferredDeeplinkResult(results: List.unmodifiable(List.from(serviceResults)));
 
     // Run all services in parallel
@@ -93,7 +93,7 @@ class DeferredDeeplink {
         final hasResultsFromIpV4AndIpV6Services = hasResultFromIpV6Service && hasResultFromIpV4Service;
         final shouldFinishMainCompleter = (remaining == 0 || result.hasPharmacyFromIpV6 || hasResultsFromIpV4AndIpV6Services) && !mainCompleter.isCompleted;
 
-        // First service finished — start 3-second timer for others
+        // First service finished — start the grace period timer for others
         if (!shouldFinishMainCompleter && !isTimerStarted) {
           isTimerStarted = true;
 
@@ -102,19 +102,18 @@ class DeferredDeeplink {
               // Important: calling the completer but not logCompleter here,
               // that way the main future returns early but we can still wait
               // for the logCompleter to get complete results for logging.
-              mainCompleter.complete(_finalResult());
+              mainCompleter.complete(finalResult());
             }
           });
         }
 
         if (shouldFinishMainCompleter) {
-          mainCompleter.complete(_finalResult());
+          mainCompleter.complete(finalResult());
         }
 
-        // Call logCompleter when all services have finished
         if (remaining == 0) {
           if (logCompleter != null && !logCompleter.isCompleted) {
-            logCompleter.complete(_finalResult());
+            logCompleter.complete(finalResult());
           }
         }
       });
@@ -156,7 +155,6 @@ class DeferredDeeplink {
           isDuplicate = true;
           pharmacyId = null;
         } else {
-          // Mark as being fetched
           queriedIps.add(fetchedIp);
 
           backendStopwatch.start();
@@ -273,19 +271,26 @@ enum DeferredDeeplinkEnvironment {
 
 /// An IP lookup service with a name and URL.
 class IpLookupService {
+  /// Creates an [IpLookupService].
   const IpLookupService({
     required this.name,
     required this.url,
     this.isIpV6Only = false,
   });
 
+  /// The name of the service, used in logs.
   final String name;
+
+  /// The URL that returns the device's public IP address as plain text.
   final String url;
+
+  /// Whether the service only answers over IPv6.
   final bool isIpV6Only;
 }
 
 /// The result of a single IP lookup service resolution.
 class DeferredDeeplinkServiceResult {
+  /// Creates a [DeferredDeeplinkServiceResult].
   const DeferredDeeplinkServiceResult({
     required this.serviceName,
     required this.isIpV6Only,
@@ -337,6 +342,7 @@ class DeferredDeeplinkServiceResult {
 
 /// The result of a deferred deeplink resolution.
 class DeferredDeeplinkResult {
+  /// Creates a [DeferredDeeplinkResult].
   const DeferredDeeplinkResult({
     required this.results,
   });
@@ -351,7 +357,7 @@ class DeferredDeeplinkResult {
 
     for (final result in results) {
       if (result.hasPharmacyFromIpV6) {
-        return result.pharmacyId;  // IPv6 match found, prefer it immediately
+        return result.pharmacyId;
       }
       if (pharmacyId == null && result.error == null && result.pharmacyId != null) {
         pharmacyId = result.pharmacyId;

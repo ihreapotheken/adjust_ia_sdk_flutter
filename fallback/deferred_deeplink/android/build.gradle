@@ -19,6 +19,8 @@ rootProject.allprojects {
     }
 }
 apply plugin: 'com.android.library'
+// Flutter only applies Kotlin to plugins itself from 3.44 on, so older versions need it here.
+apply plugin: 'kotlin-android'
 android {
     compileSdk = 36
     namespace 'com.adjust.deferred_deeplink'
@@ -41,7 +43,6 @@ android {
     }
 }
 
-// Kotlin is applied by the Flutter Gradle plugin (or built into AGP 9+), not by this plugin.
 kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17

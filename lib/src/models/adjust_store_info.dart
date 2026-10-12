@@ -21,6 +21,7 @@ class AdjustStoreInfo {
   /// Creates an [AdjustStoreInfo] with the given [storeName].
   AdjustStoreInfo(this.storeName);
 
+  /// The map sent to the native SDK over the platform channel.
   Map<String, String?> get toMap {
     Map<String, String?> storeInfoMap = <String, String?>{};
 

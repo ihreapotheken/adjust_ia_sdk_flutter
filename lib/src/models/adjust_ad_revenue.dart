@@ -66,6 +66,7 @@ class AdjustAdRevenue {
     _partnerParameters![key] = value;
   }
 
+  /// The map sent to the native SDK over the platform channel.
   Map<String, String?> get toMap {
     Map<String, String?> adRevenueMap = {'source': _source};
 
