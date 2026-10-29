@@ -86,7 +86,7 @@ class DeviceInfoCollector {
         info["groupingSeparator"] = currentLocale.groupingSeparator ?? ""
         info["currencyCode"] = currentLocale.currencyCode ?? ""
         info["currencySymbol"] = currentLocale.currencySymbol ?? ""
-        info["calendarIdentifier"] = Calendar.current.identifier.debugDescription
+        info["calendarIdentifier"] = calendarIdentifierString(Calendar.current.identifier)
         info["firstWeekday"] = Calendar.current.firstWeekday  // 1=Sunday in web, matches JS getDay()
 
         // -- Time format (comparable to Intl.DateTimeFormat resolvedOptions hour12) --
@@ -199,6 +199,28 @@ class DeviceInfoCollector {
         case .serious: return "serious"
         case .critical: return "critical"
         @unknown default: return "unknown"
+        }
+    }
+
+    private func calendarIdentifierString(_ identifier: Calendar.Identifier) -> String {
+        switch identifier {
+        case .gregorian: return "gregorian"
+        case .buddhist: return "buddhist"
+        case .chinese: return "chinese"
+        case .coptic: return "coptic"
+        case .ethiopicAmeteMihret: return "ethiopic"
+        case .ethiopicAmeteAlem: return "ethioaa"
+        case .hebrew: return "hebrew"
+        case .iso8601: return "iso8601"
+        case .indian: return "indian"
+        case .islamic: return "islamic"
+        case .islamicCivil: return "islamic-civil"
+        case .japanese: return "japanese"
+        case .persian: return "persian"
+        case .republicOfChina: return "roc"
+        case .islamicTabular: return "islamic-tbla"
+        case .islamicUmmAlQura: return "islamic-umalqura"
+        default: return "unknown"
         }
     }
 
